@@ -1,0 +1,11 @@
+test()
+
+fn test() {
+    if false {
+        let x = "naruto"
+        println(x)
+    } else {
+        let y = "Tturna"
+        println(y)
+    }
+}
