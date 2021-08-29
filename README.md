@@ -10,7 +10,7 @@ const neededForDrip = 150
 fn dripCheck(dripValue, maxDrip) {
     const percentage = ((dripValue / maxDrip) * 100)
 
-    println("Naruto's drip level is: " + percentage + "%")
+    println("Your drip level is: " + percentage + "%")
 }
 
 dripCheck(125, neededForDrip)
