@@ -4,7 +4,7 @@ import { Lexer } from "./lexer.js"
 import fs from "fs"
 
 // The test file
-const content = fs.readFileSync("./tests/test.arch", "utf-8")
+const content = fs.readFileSync("./tests/test.che", "utf-8")
 
 // The Lexer
 const lexer = new Lexer(content)
@@ -19,5 +19,5 @@ const ast = parser.parse()
 const interpreter = new Interpreter()
 
 // console.log(lexer.lexed)
-// console.log(JSON.stringify(ast, null, 2))
+console.log(JSON.stringify(ast, null, 2))
 interpreter.interpret(ast.body)

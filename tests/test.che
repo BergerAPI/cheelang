@@ -1,9 +1,19 @@
-const neededForDrip = 150; const bad = 1
+const neededForDrip = 150
 
-fn narutoDripCheck(dripValue, maxDrip) {
+fn dripCheck(dripValue, maxDrip) {
+    fn printPogThing(percentage) {
+        if percentage <= 25 println("Omg unpog! Drip level under 25%!")
+        else if percentage <= 50 println("Omg unpog! Drip level under 50%!")
+        else if percentage <= 75 println("Omg unpog! Drip level under 50%!")
+        else if percentage < 100 println("Omg unpog! Drip level under 100%!")
+        else println("Omg pog! Drip level is 100%!")
+    }
+
     const percentage = ((dripValue / maxDrip) * 100)
 
-    println("Naruto's drip level is: " + percentage + "% - bad is " + bad)
+    printPogThing(percentage)
+
+    println("Your drip level is: " + percentage + "%")
 }
 
-narutoDripCheck(125, neededForDrip)
+dripCheck(150, neededForDrip)

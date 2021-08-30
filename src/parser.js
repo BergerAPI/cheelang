@@ -202,19 +202,38 @@ export class Parser {
      */
     ifStatement() {
         const expectation = this.expect("IF_STATEMENT", "EXPR");
+        const body = [];
+        const elseBody = [];
 
-        this.eat("LEFT_BRACE");
-        const body = []
+        if (this.currentToken.name == "LEFT_BRACE") {
+            this.eat("LEFT_BRACE");
 
-        while (this.currentToken != undefined && this.currentToken.name != "RIGHT_BRACE") {
+            while (this.currentToken != undefined && this.currentToken.name != "RIGHT_BRACE")
+                body.push(this.scopeTest());
+
+            this.eat("RIGHT_BRACE");
+        } else
             body.push(this.scopeTest());
+
+        if (this.currentToken.name == "ELSE_STATEMENT") {
+            this.eat("ELSE_STATEMENT");
+
+            if (this.currentToken.name == "LEFT_BRACE") {
+                this.eat("LEFT_BRACE");
+
+                while (this.currentToken != undefined && this.currentToken.name != "RIGHT_BRACE")
+                    elseBody.push(this.scopeTest());
+
+                this.eat("RIGHT_BRACE");
+            } else
+                elseBody.push(this.scopeTest());
         }
-        this.eat("RIGHT_BRACE");
 
         return {
             type: "IF_STATEMENT",
             condition: expectation[ 2 ],
             body: body,
+            else: elseBody
         };
     }
 

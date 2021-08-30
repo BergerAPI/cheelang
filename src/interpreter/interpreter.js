@@ -125,6 +125,7 @@ export default class Interpreter {
                 case "IF_STATEMENT":
                     if (this.parseExpression(item.condition))
                         this.interpret(item.body);
+                    else this.interpret(item.else)
 
                     break;
                 case "VARIABLE_ASSIGNMENT":
