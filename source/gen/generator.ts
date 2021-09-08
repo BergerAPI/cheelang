@@ -1,4 +1,5 @@
 import { AstTree } from "../parser";
+import CodeFile from "./codeFile";
 
 enum CodeTypes {
     INT = "int",
@@ -57,8 +58,11 @@ export class Generator {
      */
     line: number = 0;
 
+    currentFile: CodeFile;
+
     constructor(ast: AstTree) {
         this.ast = ast;
+        this.currentFile = new CodeFile("main")
     }
 
     /**
@@ -118,5 +122,7 @@ export class Generator {
             new FunctionArgument("argc", CodeTypes.INT, false, false),
             new FunctionArgument("argv", CodeTypes.CHAR, true, true)
         ])
+
+        this.currentFile.save(this.content.join("\n"), "")
     }
 }

@@ -19,4 +19,5 @@ const generator = new Generator(tree)
 
 generator.work()
 
+console.log(tree.toString())
 console.log(generator.toString())
