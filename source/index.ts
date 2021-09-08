@@ -17,4 +17,6 @@ const lexer = new Lexer(content)
 const tree = new AstTree("Program", new Parser(lexer))
 const generator = new Generator(tree)
 
+generator.work()
+
 console.log(generator.toString())
