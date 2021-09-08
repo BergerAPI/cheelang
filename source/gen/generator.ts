@@ -1,10 +1,15 @@
 import { AstTree } from "../parser";
-import CodeFile from "./codeFile";
+import CodeFile from "./file";
 
 enum CodeTypes {
     INT = "int",
     STRING = "string",
     CHAR = "char"
+}
+
+enum IncludeType {
+    SYSTEM,
+    DEFAULT
 }
 
 /**
@@ -58,6 +63,9 @@ export class Generator {
      */
     line: number = 0;
 
+    /**
+     * Where to save everything
+     */
     currentFile: CodeFile;
 
     constructor(ast: AstTree) {
@@ -74,6 +82,14 @@ export class Generator {
 
             this.line++;
         }
+    }
+
+    /**
+     * Including something.
+     * @param name the name of the thing to include
+     */
+    include(name: string, type: IncludeType) {
+        this.addLines(['#include ' + (type == IncludeType.DEFAULT ? '"' : "<") + name + (type == IncludeType.DEFAULT ? '"' : ">")],)
     }
 
     /**
@@ -118,6 +134,8 @@ export class Generator {
      * Here happens the magic. pog
      */
     work() {
+        this.include("iostream", IncludeType.SYSTEM)
+
         this.addFunction("main", CodeTypes.INT, [
             new FunctionArgument("argc", CodeTypes.INT, false, false),
             new FunctionArgument("argv", CodeTypes.CHAR, true, true)

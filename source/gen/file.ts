@@ -7,7 +7,7 @@ export default class CodeFile {
         this.name = name
     }
 
-    save(content: string, headerContent: string){
+    save(content: string, headerContent: string) {
         fs.writeFileSync(this.name + ".cpp", content)
         fs.writeFileSync(this.name + ".h", headerContent)
     }
