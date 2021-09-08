@@ -311,7 +311,7 @@ export class Parser {
                 case "STRING_LITERAL":
                 case "INTEGER_LITERAL":
                     node = this.expression()
-
+                    break
                 default:
                     this.token = this.lexer.next()
             }
