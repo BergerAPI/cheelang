@@ -8,7 +8,9 @@ export default class CodeFile {
     }
 
     save(content: string, headerContent: string){
-        fs.writeFileSync(this.name + ".cpp", content)
-        fs.writeFileSync(this.name + ".h", headerContent)
+        const dir = "output"
+        fs.mkdirSync(dir)
+        fs.writeFileSync(dir + "/" + this.name + ".cpp", content)
+        fs.writeFileSync(dir + "/" + this.name + ".h", headerContent)
     }
 }
