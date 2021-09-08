@@ -117,7 +117,7 @@ export class Generator {
             [
                 type + " " + name + "(" + args + ")",
                 "{",
-                " ",
+                ' std::cout << "test" << std::endl;',
                 "}"
             ],
         )
