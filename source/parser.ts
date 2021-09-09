@@ -70,10 +70,10 @@ export class IfStatementNode implements AstNode {
     /**
      * Elements of this expression
      */
-    condition: ExpressionNode;
+    condition: AstNode;
     block: CodeBlockNode;
 
-    constructor(condition: ExpressionNode, block: CodeBlockNode) {
+    constructor(condition: AstNode, block: CodeBlockNode) {
         this.condition = condition;
         this.block = block;
     }
@@ -134,6 +134,26 @@ export class FloatLiteralNode implements AstNode {
 
     constructor(value: number) {
         this.value = value;
+    }
+}
+
+export class VariableAssignmentNode implements AstNode {
+    name: string = "VariableAssignmentNode";
+    variableName: string;
+    variableValue: AstNode;
+
+    constructor(variableName: string, variableValue: AstNode) {
+        this.variableName = variableName;
+        this.variableValue = variableValue;
+    }
+}
+
+class VariableRefrenceNode implements AstNode {
+    name: string = "VariableRefrenceNode";
+    variableName: string;
+
+    constructor(variableName: string) {
+        this.variableName = variableName;
     }
 }
 
@@ -270,10 +290,42 @@ export class Parser {
     }
 
     /**
+     * Function Call (e.g. x(2, 3) )
+     * Variable assignment (e.g. x = 2 + 2)
+     * 
+     * @return CallExpression Node || AssignmentExpression Node
+     */
+    identifier() {
+        const token = this.token;
+
+        this.eat("IDENTIFIER");
+
+        if (this.token && this.token.type == "(") {
+            // TODO
+        } else {
+            this.eat("EQUALS");
+
+            return new VariableAssignmentNode(token.raw, this.expression());
+        }
+    }
+
+    /**
      * A basic If-Statement (e.g. if 1 + 1 == 2)
      */
     ifStatement() {
+        this.eat("IF_STATEMENT")
 
+        const condition = this.expression();
+        const nodes = []
+
+        this.eat("LEFT_BRACE");
+
+        while (this.token != undefined && this.token.type != "RIGHT_BRACE")
+            nodes.push(this.codeBlock());
+
+        this.eat("RIGHT_BRACE");
+
+        return new IfStatementNode(condition, new CodeBlockNode(nodes));
     }
 
     /**
@@ -290,31 +342,41 @@ export class Parser {
         return new VariableDeclarationNode(variableName, this.expression())
     }
 
+    codeBlock() {
+        let node: any = undefined;
+
+        switch (this.token.type) {
+            case "IF_STATEMENT":
+                node = this.ifStatement()
+                break;
+
+            case "VARIABLE_DEFINITION":
+                node = this.variableDeclaration()
+                break;
+
+            case "IDENTIFIER":
+                node = this.identifier()
+                break;
+
+            case "ARITHMETIC_OPERATOR":
+            case "FLOAT_LITERAL":
+            case "STRING_LITERAL":
+            case "INTEGER_LITERAL":
+                node = this.expression()
+                break
+            default:
+                this.token = this.lexer.next()
+        }
+
+        return node
+    }
+
     /**
      * Running the parser (pog asf)
      */
     work(tree: AstTree) {
         while (this.token != undefined) {
-            let node: any = undefined;
-
-            switch (this.token.type) {
-                case "IF_STATEMENT":
-                    node = this.ifStatement()
-                    break;
-
-                case "VARIABLE_DEFINITION":
-                    node = this.variableDeclaration()
-                    break;
-
-                case "ARITHMETIC_OPERATOR":
-                case "FLOAT_LITERAL":
-                case "STRING_LITERAL":
-                case "INTEGER_LITERAL":
-                    node = this.expression()
-                    break
-                default:
-                    this.token = this.lexer.next()
-            }
+            let node = this.codeBlock()
 
             if (node)
                 tree.block.nodes.push(node)

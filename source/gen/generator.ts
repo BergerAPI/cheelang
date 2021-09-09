@@ -1,4 +1,4 @@
-import { AstNode, AstTree, BooleanLiteralNode, CodeBlockNode, ExpressionNode, IntegerLiteralNode, UnaryNode, VariableDeclarationNode } from "../parser";
+import { AstNode, AstTree, BooleanLiteralNode, CodeBlockNode, ExpressionNode, IfStatementNode, IntegerLiteralNode, StringLiteralNode, UnaryNode, VariableAssignmentNode, VariableDeclarationNode } from "../parser";
 import CodeFile from "./file";
 
 enum VariableTypes {
@@ -88,6 +88,13 @@ export class Generator {
     }
 
     /**
+     * Pog! If something = true, then do something
+     */
+    ifStatement(node: IfStatementNode) {
+        return "if (" + this.expression(node.condition) + ") \n" + "{ \n" + this.codeBlock(node.block).join("\n") + "\n}";
+    }
+
+    /**
      * A Ast-Code-Block-Node to code :sunglasses:
      */
     codeBlock(item: CodeBlockNode): string[] {
@@ -103,10 +110,17 @@ export class Generator {
                 case "ExpressionNode":
                     result.push(this.expression(node))
                     break;
+
+                case "IfStatementNode":
+                    result.push(this.ifStatement(node as IfStatementNode))
+                    break;
+
+                case "VariableAssignmentNode":
+                    result.push(this.variableAssignment(node as VariableAssignmentNode))
             }
         })
 
-        return result
+        return result.map(item => item + ";")
     }
 
     /**
@@ -114,6 +128,13 @@ export class Generator {
      */
     variableDeclaration(node: VariableDeclarationNode) {
         return "auto " + node.variableName + " = " + this.expression(node.variableValue)
+    }
+
+    /**
+     * From AST-Variable-Declaration-Node to c++ code.
+     */
+    variableAssignment(node: VariableAssignmentNode) {
+        return node.variableName + " = " + this.expression(node.variableValue)
     }
 
     /**
@@ -138,6 +159,9 @@ export class Generator {
 
             case "IntegerLiteralNode":
                 return (node as IntegerLiteralNode).value.toString();
+
+            case "StringLiteralNode":
+                return (node as StringLiteralNode).value.toString();
         }
 
         return ""
@@ -166,7 +190,7 @@ export class Generator {
         let args = rArgs.map(item => item.toString()).join(", ")
 
         // Adding the generated lines.
-        this.addLines(type + " " + name + "(" + args + ")", "{", content.map(item => item + ";").join("\n"), "}")
+        this.addLines(type + " " + name + "(" + args + ")", "{", ...content, "}")
     }
 
     /**
@@ -180,6 +204,8 @@ export class Generator {
      * Here happens the magic. pog
      */
     work() {
+        // We are in the global scope here.
+
         this.include("iostream", IncludeType.SYSTEM)
 
         this.addFunction("main", VariableTypes.INT, [
