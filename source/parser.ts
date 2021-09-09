@@ -148,8 +148,8 @@ export class VariableAssignmentNode implements AstNode {
     }
 }
 
-class VariableRefrenceNode implements AstNode {
-    name: string = "VariableRefrenceNode";
+export class VariableReferenceNode implements AstNode {
+    name: string = "VariableReferenceNode";
     variableName: string;
 
     constructor(variableName: string) {
@@ -228,7 +228,9 @@ export class Parser {
             return result
         }
 
-        throw Error("There was an error parsing a factor.")
+        this.eat("IDENTIFIER");
+
+        return new VariableReferenceNode(tokenValue);
     }
 
     /**

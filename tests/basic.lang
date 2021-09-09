@@ -1,9 +1,10 @@
-let test = -1 + -1 == 2 == true
-let test1 = -2 + 3 == 1 == false
+let test6 = -660
+let test7 = -700
+let test1 = test6 + 3
 let test2 = -5 + -5 == 10 == true
 
-test = 2
+test1 = 2
 
-if 1 + 1 == 2 {
+if true {
     let a = "NARUTP!!!!!!"                                                 
 }

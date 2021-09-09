@@ -1,4 +1,4 @@
-import { AstNode, AstTree, BooleanLiteralNode, CodeBlockNode, ExpressionNode, IfStatementNode, IntegerLiteralNode, StringLiteralNode, UnaryNode, VariableAssignmentNode, VariableDeclarationNode } from "../parser";
+import { AstNode, AstTree, BooleanLiteralNode, CodeBlockNode, ExpressionNode, IfStatementNode, IntegerLiteralNode, StringLiteralNode, UnaryNode, VariableAssignmentNode, VariableDeclarationNode, VariableReferenceNode } from "../parser";
 import CodeFile from "./file";
 
 enum VariableTypes {
@@ -162,6 +162,9 @@ export class Generator {
 
             case "StringLiteralNode":
                 return (node as StringLiteralNode).value.toString();
+
+            case "VariableReferenceNode":
+                return (node as VariableReferenceNode).variableName;
         }
 
         return ""
@@ -185,12 +188,12 @@ export class Generator {
      *          =
      *          int main() {...}
      */
-    addFunction(name: string, type: VariableTypes, rArgs: FunctionArgument[], ...content: string[]) {
+    addFunction(name: string, type: VariableTypes, rArgs: FunctionArgument[], content: string[], docs: string[] = []) {
         // Building the arguments
         let args = rArgs.map(item => item.toString()).join(", ")
 
         // Adding the generated lines.
-        this.addLines(type + " " + name + "(" + args + ")", "{", ...content, "}")
+        this.addLines(...docs.map(item => "// " + item), type + " " + name + "(" + args + ")", "{", ...content, "}")
     }
 
     /**
@@ -211,7 +214,7 @@ export class Generator {
         this.addFunction("main", VariableTypes.INT, [
             new FunctionArgument("argc", VariableTypes.INT, false, false),
             new FunctionArgument("argv", VariableTypes.CHAR, true, true)
-        ], ...this.codeBlock(this.ast.block))
+        ], this.codeBlock(this.ast.block), ["Simple main function. I mean, what did you expect?"])
 
         this.currentFile.save(this.content.join("\n"), "")
     }
