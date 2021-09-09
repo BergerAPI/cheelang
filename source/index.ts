@@ -2,6 +2,7 @@ import { AstTree, Parser } from "./parser"
 import { Lexer } from "./lexer"
 import * as fs from 'fs';
 import { Generator } from "./gen/generator";
+import { exec } from "child_process";
 
 /**
  * Reading the input file
@@ -19,5 +20,9 @@ const generator = new Generator(tree)
 
 generator.work()
 
-console.log(tree.toString())
-console.log(generator.toString())
+exec('g++ -std=c++17 main.cpp', { cwd: './output/' }, (err, stdout, stderr) => {
+    if (stdout)
+        console.log(stdout)
+    if (stderr)
+        console.log(stderr)
+});

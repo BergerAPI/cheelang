@@ -83,10 +83,12 @@ export class VariableDeclarationNode {
     name: string = "VariableDeclarationNode";
     variableName: string;
     variableValue: AstNode;
+    variableType: string;
 
-    constructor(variableName: string, variableValue: AstNode) {
+    constructor(variableName: string, variableValue: AstNode, variableType: string) {
         this.variableName = variableName;
         this.variableValue = variableValue;
+        this.variableType = variableType;
     }
 }
 
@@ -334,14 +336,27 @@ export class Parser {
      * Defining a variable.
      */
     variableDeclaration() {
+        let variableType = "auto";
+
         this.eat("VARIABLE_DEFINITION")
 
         const variableName = this.token.raw;
 
-        this.eat("IDENTIFIER")
+        // Checking if the thingy user defines a type
+        const peek = this.lexer.next(true);
+
+        if (peek.type == "COLON") {
+            this.eat("IDENTIFIER")
+            this.eat(peek.type);
+
+            variableType = this.token.raw;
+
+            this.eat("IDENTIFIER")
+        } else this.eat("IDENTIFIER")
+
         this.eat("EQUALS")
 
-        return new VariableDeclarationNode(variableName, this.expression())
+        return new VariableDeclarationNode(variableName, this.expression(), variableType)
     }
 
     codeBlock() {

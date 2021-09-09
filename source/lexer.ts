@@ -20,6 +20,7 @@ class TokenType {
     static RETURN_STATEMENT: RegExp = /^(return)/;
     static VARIABLE_DEFINITION: RegExp = /^(let|const)/;
     static IDENTIFIER: RegExp = /^([a-zA-Z0-9]+)/;
+    static COLON: RegExp = /^(\:)/;
 };
 
 // A basic token, that the lexer gonna put into his array
@@ -87,10 +88,10 @@ export class Lexer {
                 if (!match)
                     continue;
 
-                if (!peek) this.content[this.line] = line.substring(match[0].length);
+                if (!peek || key == "WHITESPACE") this.content[this.line] = line.substring(match[0].length);
 
                 if (key == "WHITESPACE")
-                    return this.next()
+                    return this.next(peek)
 
                 return new Token(
                     this.line, this.rawContent[this.line].length - this.content[this.line].length,
@@ -100,7 +101,7 @@ export class Lexer {
         else {
             this.line++;
 
-            return this.next();
+            return this.next(peek);
         }
 
         return undefined

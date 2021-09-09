@@ -127,7 +127,7 @@ export class Generator {
      * From AST-Variable-Declaration-Node to c++ code.
      */
     variableDeclaration(node: VariableDeclarationNode) {
-        return "auto " + node.variableName + " = " + this.expression(node.variableValue)
+        return node.variableType + " " + node.variableName + " = " + this.expression(node.variableValue)
     }
 
     /**
