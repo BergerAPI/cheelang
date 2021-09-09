@@ -21,6 +21,7 @@ class TokenType {
     static VARIABLE_DEFINITION: RegExp = /^(let|const)/;
     static IDENTIFIER: RegExp = /^([a-zA-Z0-9]+)/;
     static COLON: RegExp = /^(\:)/;
+    static COMMENT: RegExp = /^(\#)/;
 };
 
 // A basic token, that the lexer gonna put into his array
@@ -75,9 +76,15 @@ export class Lexer {
      * Getting the next token (this method increases the position.)
      */
     next(peek: boolean = false): any {
-        const line = this.content[this.line]
+        let line = this.content[this.line]
 
         if (line == undefined) return undefined
+
+        // This is a comment. We hate them.
+        if (line.trim().startsWith("#")) {
+            this.line++;
+            return this.next(peek);
+        };
 
         // We need the nearest match here.
         if (line.replace(" ", "").length != 0)
