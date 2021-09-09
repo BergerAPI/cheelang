@@ -20,7 +20,7 @@ const generator = new Generator(tree)
 
 generator.work()
 
-exec('g++ -std=c++17 main.cpp', { cwd: './output/' }, (err, stdout, stderr) => {
+exec('g++ -std=c++17 ./bin/main.cpp -o ./executable', { cwd: './output/' }, (err, stdout, stderr) => {
     if (stdout)
         console.log(stdout)
     if (stderr)

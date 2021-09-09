@@ -8,9 +8,11 @@ export default class CodeFile {
     }
 
     save(content: string, headerContent: string) {
-        const dir = "output"
+        const dir = "output/bin"
+
         if (!fs.existsSync(dir))
-            fs.mkdirSync(dir)
+            fs.mkdirSync(dir, { recursive: true })
+
         fs.writeFileSync(dir + "/" + this.name + ".cpp", content)
         fs.writeFileSync(dir + "/" + this.name + ".h", headerContent)
     }
