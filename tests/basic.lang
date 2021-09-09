@@ -4,6 +4,7 @@ let test6: int = -660
 let test7 = -700
 let test1 = test6 + 3
 let test2 = -5 + -5 == 10 == true
+let basicString: string = "sdfsdfsdf"
 
 # Moin Mojn meine aktiven freunde
 test1 = 2

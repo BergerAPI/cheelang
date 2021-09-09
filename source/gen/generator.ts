@@ -3,7 +3,7 @@ import CodeFile from "./file";
 
 enum VariableTypes {
     INT = "int",
-    STRING = "string",
+    STRING = "std::string",
     CHAR = "char",
     AUTO = "auto"
 }
@@ -127,7 +127,9 @@ export class Generator {
      * From AST-Variable-Declaration-Node to c++ code.
      */
     variableDeclaration(node: VariableDeclarationNode) {
-        return node.variableType + " " + node.variableName + " = " + this.expression(node.variableValue)
+        let type = VariableTypes[Object.keys(VariableTypes).filter(e => e == node.variableType.toUpperCase())[0] as keyof typeof VariableTypes]
+
+        return type + " " + node.variableName + " = " + this.expression(node.variableValue)
     }
 
     /**
