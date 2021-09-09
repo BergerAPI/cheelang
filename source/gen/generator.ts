@@ -1,10 +1,11 @@
-import { AstTree } from "../parser";
+import { AstNode, AstTree, BooleanLiteralNode, CodeBlockNode, ExpressionNode, IntegerLiteralNode, UnaryNode, VariableDeclarationNode } from "../parser";
 import CodeFile from "./file";
 
-enum CodeTypes {
+enum VariableTypes {
     INT = "int",
     STRING = "string",
-    CHAR = "char"
+    CHAR = "char",
+    AUTO = "auto"
 }
 
 enum IncludeType {
@@ -17,7 +18,7 @@ enum IncludeType {
  */
 export class FunctionArgument {
     name: string;
-    type: CodeTypes;
+    type: VariableTypes;
 
     /**
      * Some informations, that are good to know
@@ -28,7 +29,7 @@ export class FunctionArgument {
 
     constructor(
         name: string,
-        type: CodeTypes,
+        type: VariableTypes,
         pointer: boolean = false,
         array: boolean = false
     ) {
@@ -76,12 +77,70 @@ export class Generator {
     /**
      * Adds some lines.
      */
-    addLines(lines: string[]) {
+    addLines(...lines: string[]) {
         for (let lineContent of lines) {
             this.content.push(lineContent)
 
             this.line++;
         }
+
+        this.content.push("")
+    }
+
+    /**
+     * A Ast-Code-Block-Node to code :sunglasses:
+     */
+    codeBlock(item: CodeBlockNode): string[] {
+        let result: string[] = []
+
+        // Running everything. pog
+        item.nodes.forEach(node => {
+            switch (node.name) {
+                case "VariableDeclarationNode":
+                    result.push(this.variableDeclaration(node as VariableDeclarationNode))
+                    break;
+
+                case "ExpressionNode":
+                    result.push(this.expression(node))
+                    break;
+            }
+        })
+
+        return result
+    }
+
+    /**
+     * From AST-Variable-Declaration-Node to c++ code.
+     */
+    variableDeclaration(node: VariableDeclarationNode) {
+        return "auto " + node.variableName + " = " + this.expression(node.variableValue)
+    }
+
+    /**
+     * From code to expression (ast) and then to code again.
+     */
+    expression(node: AstNode): string {
+        switch (node.name) {
+            case "ExpressionNode": {
+                let typeNode = node as ExpressionNode
+
+                return "(" + this.expression(typeNode.left) + " " + typeNode.operator + " " + this.expression(typeNode.right) + ")"
+            };
+
+            case "UnaryNode": {
+                let typeNode = node as UnaryNode
+
+                return typeNode.operator + this.expression(typeNode.operand)
+            }
+
+            case "BooleanLiteralNode":
+                return (node as BooleanLiteralNode).value.toString();
+
+            case "IntegerLiteralNode":
+                return (node as IntegerLiteralNode).value.toString();
+        }
+
+        return ""
     }
 
     /**
@@ -89,7 +148,7 @@ export class Generator {
      * @param name the name of the thing to include
      */
     include(name: string, type: IncludeType) {
-        this.addLines(['#include ' + (type == IncludeType.DEFAULT ? '"' : "<") + name + (type == IncludeType.DEFAULT ? '"' : ">")],)
+        this.addLines('#include ' + (type == IncludeType.DEFAULT ? '"' : "<") + name + (type == IncludeType.DEFAULT ? '"' : ">"))
     }
 
     /**
@@ -102,25 +161,12 @@ export class Generator {
      *          =
      *          int main() {...}
      */
-    addFunction(name: string, type: CodeTypes, rArgs: FunctionArgument[]) {
+    addFunction(name: string, type: VariableTypes, rArgs: FunctionArgument[], ...content: string[]) {
         // Building the arguments
-        let args = ""
-
-        rArgs.forEach((item) => {
-            args += item.toString() + ", ";
-        })
-
-        args = args.slice(0, -2);
+        let args = rArgs.map(item => item.toString()).join(", ")
 
         // Adding the generated lines.
-        this.addLines(
-            [
-                type + " " + name + "(" + args + ")",
-                "{",
-                ' std::cout << "test" << std::endl;',
-                "}"
-            ],
-        )
+        this.addLines(type + " " + name + "(" + args + ")", "{", content.map(item => item + ";").join("\n"), "}")
     }
 
     /**
@@ -136,10 +182,10 @@ export class Generator {
     work() {
         this.include("iostream", IncludeType.SYSTEM)
 
-        this.addFunction("main", CodeTypes.INT, [
-            new FunctionArgument("argc", CodeTypes.INT, false, false),
-            new FunctionArgument("argv", CodeTypes.CHAR, true, true)
-        ])
+        this.addFunction("main", VariableTypes.INT, [
+            new FunctionArgument("argc", VariableTypes.INT, false, false),
+            new FunctionArgument("argv", VariableTypes.CHAR, true, true)
+        ], ...this.codeBlock(this.ast.block))
 
         this.currentFile.save(this.content.join("\n"), "")
     }

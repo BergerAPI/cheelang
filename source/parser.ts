@@ -30,11 +30,11 @@ export class AstTree {
 /**
  * Every other node is based on this.
  */
-interface AstNode {
+export interface AstNode {
     name: string
 }
 
-class CodeBlockNode implements AstNode {
+export class CodeBlockNode implements AstNode {
     name: string = "CodeBlockNode";
 
     /**
@@ -47,7 +47,7 @@ class CodeBlockNode implements AstNode {
     }
 }
 
-class ExpressionNode implements AstNode {
+export class ExpressionNode implements AstNode {
     name: string = "ExpressionNode";
 
     /**
@@ -64,7 +64,7 @@ class ExpressionNode implements AstNode {
     }
 }
 
-class IfStatementNode implements AstNode {
+export class IfStatementNode implements AstNode {
     name: string = "IfStatementNode";
 
     /**
@@ -79,7 +79,7 @@ class IfStatementNode implements AstNode {
     }
 }
 
-class VariableDeclarationNode {
+export class VariableDeclarationNode {
     name: string = "VariableDeclarationNode";
     variableName: string;
     variableValue: AstNode;
@@ -90,7 +90,7 @@ class VariableDeclarationNode {
     }
 }
 
-class UnaryNode implements AstNode {
+export class UnaryNode implements AstNode {
     name: string = "UnaryNode";
     operand: AstNode;
     operator: string;
@@ -101,7 +101,7 @@ class UnaryNode implements AstNode {
     }
 }
 
-class StringLiteralNode implements AstNode {
+export class StringLiteralNode implements AstNode {
     name: string = "StringLiteralNode";
     value: string;
 
@@ -110,7 +110,7 @@ class StringLiteralNode implements AstNode {
     }
 }
 
-class IntegerLiteralNode implements AstNode {
+export class IntegerLiteralNode implements AstNode {
     name: string = "IntegerLiteralNode";
     value: number;
 
@@ -119,7 +119,7 @@ class IntegerLiteralNode implements AstNode {
     }
 }
 
-class BooleanLiteralNode implements AstNode {
+export class BooleanLiteralNode implements AstNode {
     name: string = "BooleanLiteralNode";
     value: boolean;
 
@@ -128,7 +128,7 @@ class BooleanLiteralNode implements AstNode {
     }
 }
 
-class FloatLiteralNode implements AstNode {
+export class FloatLiteralNode implements AstNode {
     name: string = "FloatLiteralNode";
     value: number;
 
@@ -273,7 +273,7 @@ export class Parser {
      * A basic If-Statement (e.g. if 1 + 1 == 2)
      */
     ifStatement() {
-        
+
     }
 
     /**
