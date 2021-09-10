@@ -16,6 +16,7 @@ let content = readFile("./tests/basic.lang")
 // Here begins the fun
 const lexer = new Lexer(content)
 const tree = new AstTree("Program", new Parser(lexer))
+console.log(tree.toString())
 const generator = new Generator(tree)
 
 generator.work()
