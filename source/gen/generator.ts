@@ -56,7 +56,6 @@ export class CodeFunction {
         this.args = args;
     }
 
-<<<<<<< HEAD
     toString() {
         return `${this.returnType} ${this.name}(${this.args.map(a => a.toString()).join(", ")}) {
             ${funcs.codeBlock(this.codeBlock).join("\n")}
@@ -71,16 +70,6 @@ export class CodeVariable {
     name: string;
     type: VariableTypes;
     value: ExpressionNode;
-=======
-    /**
-     * Adds some lines.
-     */
-    addLines(...lines: string[]) {
-        for (let lineContent of lines) {
-            this.content.push(lineContent)
-            this.line++;
-        }
->>>>>>> bd18860a0d338b0c523bc9540df4e3e5189c9fdb
 
     constructor(name: string, type: VariableTypes, value: ExpressionNode) {
         this.name = name;
@@ -137,16 +126,7 @@ export class File {
     /**
      * The functions, classes and variables of this class
      */
-<<<<<<< HEAD
     sequence: any[] = [];
-=======
-    callExpression(node: CallExpressionNode) {
-        if (node.integrated) {
-            const integratedFunction = integratedFunctions[node.functionName as keyof typeof integratedFunctions]
-            let value = integratedFunction.value.toString();
-
-            node.args.forEach((item, index) => value = integratedFunction.value.replace("$" + (index + 1), this.expression(item)))
->>>>>>> bd18860a0d338b0c523bc9540df4e3e5189c9fdb
 
     constructor(name: string = "main") {
         this.name = name;
@@ -155,13 +135,8 @@ export class File {
     save() {
         const dir = "output/bin"
 
-<<<<<<< HEAD
         if (!fs.existsSync(dir))
             fs.mkdirSync(dir, { recursive: true })
-=======
-                return "(" + this.expression(typeNode.left) + " " + typeNode.operator + " " + this.expression(typeNode.right) + ")"
-            }
->>>>>>> bd18860a0d338b0c523bc9540df4e3e5189c9fdb
 
         fs.writeFileSync(dir + "/" + this.name + ".cpp", this.generateMainFile())
     }
@@ -196,7 +171,6 @@ export class Generator {
     /**
      * Including something.
      * @param name the name of the thing to include
-     * @param type
      */
     include(name: string) {
         this.code.sequence.push(new CodeInclude(name))
