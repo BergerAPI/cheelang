@@ -85,7 +85,6 @@ export class Generator {
     addLines(...lines: string[]) {
         for (let lineContent of lines) {
             this.content.push(lineContent)
-
             this.line++;
         }
 
@@ -157,7 +156,7 @@ export class Generator {
     callExpression(node: CallExpressionNode) {
         if (node.integrated) {
             const integratedFunction = integratedFunctions[node.functionName as keyof typeof integratedFunctions]
-            let value = "" + integratedFunction.value;
+            let value = integratedFunction.value.toString();
 
             node.args.forEach((item, index) => value = integratedFunction.value.replace("$" + (index + 1), this.expression(item)))
 
@@ -179,7 +178,7 @@ export class Generator {
                 let typeNode = node as ExpressionNode
 
                 return "(" + this.expression(typeNode.left) + " " + typeNode.operator + " " + this.expression(typeNode.right) + ")"
-            };
+            }
 
             case "UnaryNode": {
                 let typeNode = node as UnaryNode
@@ -206,6 +205,7 @@ export class Generator {
     /**
      * Including something.
      * @param name the name of the thing to include
+     * @param type
      */
     include(name: string, type: IncludeType) {
         this.addLines('#include ' + (type == IncludeType.DEFAULT ? '"' : "<") + name + (type == IncludeType.DEFAULT ? '"' : ">"))
