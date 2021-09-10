@@ -17,6 +17,8 @@ class TokenType {
     static FUNCTION_DEFINITION: RegExp = /^(fn)/;
     static IF_STATEMENT: RegExp = /^(if)/;
     static ELSE_STATEMENT: RegExp = /^(else)/;
+    static WHILE_STATEMENT: RegExp = /^(while)/;
+    static BREAK_STATEMENT: RegExp = /^(break)/;
     static RETURN_STATEMENT: RegExp = /^(return)/;
     static VARIABLE_DEFINITION: RegExp = /^(let|const)/;
     static IDENTIFIER: RegExp = /^([a-zA-Z0-9]+)/;

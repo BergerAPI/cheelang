@@ -172,6 +172,21 @@ export class CallExpressionNode implements AstNode {
     }
 }
 
+export class WhileStatementNode implements AstNode {
+    name: string = "WhileStatementNode";
+    condition: AstNode;
+    block: CodeBlockNode;
+
+    constructor(condition: AstNode, block: CodeBlockNode) {
+        this.condition = condition;
+        this.block = block;
+    }
+}
+
+export class BreakStatementNode implements AstNode {
+    name: string = "BreakStatementNode";
+}
+
 /**
  * Here we build the 
  */
@@ -359,6 +374,25 @@ export class Parser {
     }
 
     /**
+     * A basic While-Statement (e.g. while 1 + 1 == 2 {...})
+     */
+    whileStatement() {
+        this.eat("WHILE_STATEMENT");
+
+        const condition = this.expression();
+        const nodes = []
+
+        this.eat("LEFT_BRACE");
+
+        while (this.token != undefined && this.token.type != "RIGHT_BRACE")
+            nodes.push(this.codeBlock());
+
+        this.eat("RIGHT_BRACE");
+
+        return new WhileStatementNode(condition, new CodeBlockNode(nodes));
+    }
+
+    /**
      * Defining a variable.
      */
     variableDeclaration() {
@@ -391,6 +425,15 @@ export class Parser {
         switch (this.token.type) {
             case "IF_STATEMENT":
                 node = this.ifStatement()
+                break;
+
+            case "WHILE_STATEMENT":
+                node = this.whileStatement()
+                break;
+
+            case "BREAK_STATEMENT":
+                this.eat("BREAK_STATEMENT")
+                node = new BreakStatementNode()
                 break;
 
             case "VARIABLE_DEFINITION":

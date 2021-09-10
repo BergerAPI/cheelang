@@ -1,21 +1,12 @@
-import { AstNode, AstTree, BooleanLiteralNode, CallExpressionNode, CodeBlockNode, ExpressionNode, IfStatementNode, IntegerLiteralNode, StringLiteralNode, UnaryNode, VariableAssignmentNode, VariableDeclarationNode, VariableReferenceNode } from "../parser";
-import CodeFile from "./file";
+import { AstTree, CodeBlockNode, ExpressionNode } from "../parser";
+import * as funcs from "./func";
+import fs from "fs"
 
-enum VariableTypes {
+export enum VariableTypes {
     INT = "int",
     STRING = "std::string",
     CHAR = "char",
     AUTO = "auto"
-}
-
-enum IncludeType {
-    SYSTEM,
-    DEFAULT
-}
-
-let integratedFunctions = {
-    "println": { requiredArguments: 1, value: "std::cout << $1 << std::endl" },
-    "input": { requiredArguments: 1, value: "std::cin >> $1" },
 }
 
 /**
@@ -50,6 +41,114 @@ export class FunctionArgument {
 }
 
 /**
+ * A basic c++ function.
+ */
+export class CodeFunction {
+    name: string;
+    args: FunctionArgument[] = [];
+    returnType: VariableTypes;
+    codeBlock: CodeBlockNode;
+
+    constructor(name: string, returnType: VariableTypes, args: FunctionArgument[], codeBlock: CodeBlockNode) {
+        this.name = name;
+        this.returnType = returnType;
+        this.codeBlock = codeBlock;
+        this.args = args;
+    }
+
+    toString() {
+        return `${this.returnType} ${this.name}(${this.args.map(a => a.toString()).join(", ")}) {
+            ${funcs.codeBlock(this.codeBlock).join("\n")}
+        }`
+    }
+}
+
+/**
+ * A basic c++ variable.
+ */
+export class CodeVariable {
+    name: string;
+    type: VariableTypes;
+    value: ExpressionNode;
+
+    constructor(name: string, type: VariableTypes, value: ExpressionNode) {
+        this.name = name;
+        this.type = type;
+        this.value = value;
+    }
+
+    toString() {
+        return `${this.type} ${this.name} = ${this.value.toString()};`
+    }
+}
+
+/**
+ * A basic c++ class.
+ */
+export class CodeClass {
+    name: string;
+    variables: CodeVariable[] = [];
+    functions: CodeFunction[] = [];
+
+    constructor(name: string) {
+        this.name = name;
+    }
+
+    toString() {
+        return `class ${this.name} {
+            ${this.variables.map(v => v.toString()).join("\n")}
+            ${this.functions.map(f => f.toString()).join("\n")}
+        }`
+    }
+}
+
+class CodeInclude {
+    name: string;
+
+    constructor(name: string) {
+        this.name = name;
+    }
+
+    toString() {
+        return `#include "${this.name}"`
+    }
+}
+
+/**
+ * .cpp and .h files are generated from this class.
+ */
+export class File {
+    /**
+     * The name of the file.
+     */
+    name: string;
+
+    /**
+     * The functions, classes and variables of this class
+     */
+    sequence: any[] = [];
+
+    constructor(name: string = "main") {
+        this.name = name;
+    }
+
+    save() {
+        const dir = "output/bin"
+
+        if (!fs.existsSync(dir))
+            fs.mkdirSync(dir, { recursive: true })
+
+        fs.writeFileSync(dir + "/" + this.name + ".cpp", this.generateMainFile())
+    }
+
+    generateMainFile() {
+        return `${this.sequence.map(s => {
+            return s.toString();
+        }).join("\n\n")}`
+    }
+}
+
+/**
  * This converts json ast to thingy c++ code
  */
 export class Generator {
@@ -60,155 +159,21 @@ export class Generator {
     ast: AstTree;
 
     /**
-     * Here we store the current file.
+     * Everything to c++ code.
      */
-    content: string[] = [];
-
-    /**
-     * Where we currently are.
-     */
-    line: number = 0;
-
-    /**
-     * Where to save everything
-     */
-    currentFile: CodeFile;
+    code: File;
 
     constructor(ast: AstTree) {
         this.ast = ast;
-        this.currentFile = new CodeFile("main")
-    }
-
-    /**
-     * Adds some lines.
-     */
-    addLines(...lines: string[]) {
-        for (let lineContent of lines) {
-            this.content.push(lineContent)
-
-            this.line++;
-        }
-
-        this.content.push("")
-    }
-
-    /**
-     * Pog! If something = true, then do something
-     */
-    ifStatement(node: IfStatementNode) {
-        return "if (" + this.expression(node.condition) + ") \n" + "{ \n" + this.codeBlock(node.block).join("\n") + "\n}";
-    }
-
-    /**
-     * A Ast-Code-Block-Node to code :sunglasses:
-     */
-    codeBlock(item: CodeBlockNode): string[] {
-        let result: string[] = []
-
-        // Running everything. pog
-        item.nodes.forEach(node => {
-            switch (node.name) {
-                case "VariableDeclarationNode":
-                    result.push(this.variableDeclaration(node as VariableDeclarationNode))
-                    break;
-
-                case "ExpressionNode":
-                    result.push(this.expression(node))
-                    break;
-
-                case "IfStatementNode":
-                    result.push(this.ifStatement(node as IfStatementNode))
-                    break;
-
-                case "VariableAssignmentNode":
-                    result.push(this.variableAssignment(node as VariableAssignmentNode))
-                    break;
-
-                case "CallExpressionNode":
-                    result.push(this.callExpression(node as CallExpressionNode))
-                    break;
-            }
-        })
-
-        return result.map(item => item + ";")
-    }
-
-    /**
-     * From AST-Variable-Declaration-Node to c++ code.
-     */
-    variableDeclaration(node: VariableDeclarationNode) {
-        let type = VariableTypes[Object.keys(VariableTypes).filter(e => e == node.variableType.toUpperCase())[0] as keyof typeof VariableTypes]
-
-        return type + " " + node.variableName + " = " + this.expression(node.variableValue)
-    }
-
-    /**
-     * From AST-Variable-Declaration-Node to c++ code.
-     */
-    variableAssignment(node: VariableAssignmentNode) {
-        return node.variableName + " = " + this.expression(node.variableValue)
-    }
-
-    /**
-     * Calling a function (pog)
-     * @param node the node
-     * @returns the c++ code
-     */
-    callExpression(node: CallExpressionNode) {
-        if (node.integrated) {
-            const integratedFunction = integratedFunctions[node.functionName as keyof typeof integratedFunctions]
-            let value = "" + integratedFunction.value;
-
-            node.args.forEach((item, index) => value = integratedFunction.value.replace("$" + (index + 1), this.expression(item)))
-
-            if (node.args.length != integratedFunction.requiredArguments)
-                throw new Error("functions " + node.functionName + " requires " + integratedFunction.requiredArguments + " arguments")
-
-            return value
-        }
-
-        return node.functionName + "(" + node.args.map(arg => this.expression(arg)).join(", ") + ")"
-    }
-
-    /**
-     * From code to expression (ast) and then to code again.
-     */
-    expression(node: AstNode): string {
-        switch (node.name) {
-            case "ExpressionNode": {
-                let typeNode = node as ExpressionNode
-
-                return "(" + this.expression(typeNode.left) + " " + typeNode.operator + " " + this.expression(typeNode.right) + ")"
-            };
-
-            case "UnaryNode": {
-                let typeNode = node as UnaryNode
-
-                return typeNode.operator + this.expression(typeNode.operand)
-            }
-
-            case "BooleanLiteralNode":
-                return (node as BooleanLiteralNode).value.toString();
-
-            case "IntegerLiteralNode":
-                return (node as IntegerLiteralNode).value.toString();
-
-            case "StringLiteralNode":
-                return (node as StringLiteralNode).value.toString();
-
-            case "VariableReferenceNode":
-                return (node as VariableReferenceNode).variableName;
-        }
-
-        return ""
+        this.code = new File("main")
     }
 
     /**
      * Including something.
      * @param name the name of the thing to include
      */
-    include(name: string, type: IncludeType) {
-        this.addLines('#include ' + (type == IncludeType.DEFAULT ? '"' : "<") + name + (type == IncludeType.DEFAULT ? '"' : ">"))
+    include(name: string) {
+        this.code.sequence.push(new CodeInclude(name))
     }
 
     /**
@@ -221,19 +186,9 @@ export class Generator {
      *          =
      *          int main() {...}
      */
-    addFunction(name: string, type: VariableTypes, rArgs: FunctionArgument[], content: string[], docs: string[] = []) {
-        // Building the arguments
-        let args = rArgs.map(item => item.toString()).join(", ")
-
+    addFunction(name: string, type: VariableTypes, rArgs: FunctionArgument[], code: CodeBlockNode) {
         // Adding the generated lines.
-        this.addLines(...docs.map(item => "// " + item), type + " " + name + "(" + args + ")", "{", ...content, "}")
-    }
-
-    /**
-     * We want to full c++ code like cool thingys
-     */
-    toString() {
-        return this.content
+        this.code.sequence.push(new CodeFunction(name, type, rArgs, code))
     }
 
     /**
@@ -242,13 +197,13 @@ export class Generator {
     work() {
         // We are in the global scope here.
 
-        this.include("iostream", IncludeType.SYSTEM)
+        this.include("iostream")
 
         this.addFunction("main", VariableTypes.INT, [
             new FunctionArgument("argc", VariableTypes.INT, false, false),
             new FunctionArgument("argv", VariableTypes.CHAR, true, true)
-        ], this.codeBlock(this.ast.block), ["Simple main function. I mean, what did you expect?"])
+        ], this.ast.block)
 
-        this.currentFile.save(this.content.join("\n"), "")
+        this.code.save()
     }
 }

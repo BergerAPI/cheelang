@@ -1,5 +1,13 @@
 let name: string = "undefined :angry:"
+let index = 0
 
-println("Type your name.")
-input(name)
-println("Your name is: " + name)
+while true {
+    index = index + 2
+    
+    # println(index)
+
+    if index >= 10000 {
+        println("We did it! pog!")
+        break
+    }
+}

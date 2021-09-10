@@ -1,6 +1,6 @@
 import { AstTree, Parser } from "./parser"
 import { Lexer } from "./lexer"
-import * as fs from 'fs';
+import fs from 'fs';
 import { Generator } from "./gen/generator";
 import { exec } from "child_process";
 
@@ -25,4 +25,9 @@ exec('g++ -std=c++17 ./bin/main.cpp -o ./executable', { cwd: './output/' }, (err
         console.log(stdout)
     if (stderr)
         console.log(stderr)
+});
+
+exec('clang-format ./main.cpp', { cwd: './output/bin' }, (err, stdout, stderr) => {
+    if (stdout)
+        fs.writeFileSync('./output/bin/main.cpp', stdout)
 });
