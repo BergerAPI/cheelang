@@ -1,4 +1,4 @@
-import { AstNode, AstTree, BooleanLiteralNode, CodeBlockNode, ExpressionNode, IfStatementNode, IntegerLiteralNode, StringLiteralNode, UnaryNode, VariableAssignmentNode, VariableDeclarationNode, VariableReferenceNode } from "../parser";
+import { AstNode, AstTree, BooleanLiteralNode, CallExpressionNode, CodeBlockNode, ExpressionNode, IfStatementNode, IntegerLiteralNode, StringLiteralNode, UnaryNode, VariableAssignmentNode, VariableDeclarationNode, VariableReferenceNode } from "../parser";
 import CodeFile from "./file";
 
 enum VariableTypes {
@@ -11,6 +11,11 @@ enum VariableTypes {
 enum IncludeType {
     SYSTEM,
     DEFAULT
+}
+
+let integratedFunctions = {
+    "println": { requiredArguments: 1, value: "std::cout << $1 << std::endl" },
+    "input": { requiredArguments: 1, value: "std::cin >> $1" },
 }
 
 /**
@@ -117,6 +122,11 @@ export class Generator {
 
                 case "VariableAssignmentNode":
                     result.push(this.variableAssignment(node as VariableAssignmentNode))
+                    break;
+
+                case "CallExpressionNode":
+                    result.push(this.callExpression(node as CallExpressionNode))
+                    break;
             }
         })
 
@@ -137,6 +147,27 @@ export class Generator {
      */
     variableAssignment(node: VariableAssignmentNode) {
         return node.variableName + " = " + this.expression(node.variableValue)
+    }
+
+    /**
+     * Calling a function (pog)
+     * @param node the node
+     * @returns the c++ code
+     */
+    callExpression(node: CallExpressionNode) {
+        if (node.integrated) {
+            const integratedFunction = integratedFunctions[node.functionName as keyof typeof integratedFunctions]
+            let value = "" + integratedFunction.value;
+
+            node.args.forEach((item, index) => value = integratedFunction.value.replace("$" + (index + 1), this.expression(item)))
+
+            if (node.args.length != integratedFunction.requiredArguments)
+                throw new Error("functions " + node.functionName + " requires " + integratedFunction.requiredArguments + " arguments")
+
+            return value
+        }
+
+        return node.functionName + "(" + node.args.map(arg => this.expression(arg)).join(", ") + ")"
     }
 
     /**

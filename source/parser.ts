@@ -159,6 +159,19 @@ export class VariableReferenceNode implements AstNode {
     }
 }
 
+export class CallExpressionNode implements AstNode {
+    name: string = "CallExpressionNode";
+    functionName: string;
+    args: AstNode[];
+    integrated: boolean;
+
+    constructor(functionName: string, args: AstNode[], integrated: boolean) {
+        this.functionName = functionName;
+        this.args = args;
+        this.integrated = integrated;
+    }
+}
+
 /**
  * Here we build the 
  */
@@ -304,8 +317,21 @@ export class Parser {
 
         this.eat("IDENTIFIER");
 
-        if (this.token && this.token.type == "(") {
-            // TODO
+        if (this.token && this.token.type == "LEFT_PARENTHESIS") {
+            const args = []
+
+            this.eat("LEFT_PARENTHESIS")
+
+            while (this.token != undefined && this.token.raw != ")") {
+                args.push(this.expression())
+
+                if (this.token != undefined && this.token.raw == ",")
+                    this.eat("COMMA")
+            }
+
+            this.eat("RIGHT_PARENTHESIS")
+
+            return new CallExpressionNode(token.raw, args, true)
         } else {
             this.eat("EQUALS");
 

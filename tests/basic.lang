@@ -1,16 +1,5 @@
+let name: string = "undefined :angry:"
 
-# Variablen for the win (minecraft)
-let test6: int = -660
-let test7 = -700
-let test1 = test6 + 3
-let test2 = -5 + -5 == 10 == true
-let basicString: string = "sdfsdfsdf"
-
-# Moin Mojn meine aktiven freunde
-test1 = 2
-
-# This is a comment.
-# Test Naruto
-if true {
-    let a = "NARUTP!!!!!!"                                                 
-}
+println("Type your name.")
+input(name)
+println("Your name is: " + name)
