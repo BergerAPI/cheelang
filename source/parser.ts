@@ -1,4 +1,4 @@
-import { Lexer, Token } from "./lexer";
+import { Lexer, Token, TokenType } from "./lexer";
 
 /**
  * The thing that this parser returns
@@ -72,10 +72,12 @@ export class IfStatementNode implements AstNode {
      */
     condition: AstNode;
     block: CodeBlockNode;
+    elseBlock: CodeBlockNode;
 
-    constructor(condition: AstNode, block: CodeBlockNode) {
+    constructor(condition: AstNode, block: CodeBlockNode, elseBlock: CodeBlockNode = new CodeBlockNode([])) {
         this.condition = condition;
         this.block = block;
+        this.elseBlock = elseBlock
     }
 }
 
@@ -355,9 +357,28 @@ export class Parser {
     }
 
     /**
-     * A basic If-Statement (e.g. if 1 + 1 == 2)
+     * A basic else statement (e.g. if 1 + 1 == 2 {...} else {...})
      */
-    ifStatement() {
+    elseStatement() {
+        const braces = this.token.type == "LEFT_BRACE"
+        const nodes = []
+
+        if (braces) {
+            this.eat("LEFT_BRACE");
+
+            while (this.token != undefined && this.token.type != "RIGHT_BRACE")
+                nodes.push(this.codeBlock());
+
+            this.eat("RIGHT_BRACE");
+        } else nodes.push(this.codeBlock())
+
+        return new CodeBlockNode(nodes)
+    }
+
+    /**
+     * A basic If-Statement (e.g. if 1 + 1 == 2 {...})
+     */
+    ifStatement(): IfStatementNode {
         this.eat("IF_STATEMENT")
 
         const condition = this.expression();
@@ -369,6 +390,13 @@ export class Parser {
             nodes.push(this.codeBlock());
 
         this.eat("RIGHT_BRACE");
+
+        // Checking for else thingies
+        if (this.token.type == "ELSE_STATEMENT") {
+            this.eat("ELSE_STATEMENT");
+
+            return new IfStatementNode(condition, new CodeBlockNode(nodes), this.elseStatement());
+        }
 
         return new IfStatementNode(condition, new CodeBlockNode(nodes));
     }
@@ -393,10 +421,31 @@ export class Parser {
     }
 
     /**
+     * Finding out, which type an expression returns
+     */
+    type(expression: AstNode): string {
+        switch (expression.name) {
+            case "StringLiteralNode": return "string"
+            case "BooleanLiteralNode": return "boolean"
+            case "IntegerLiteralNode": return "int"
+            case "ExpressionNode": {
+                let operator = (expression as ExpressionNode).operator
+
+                if (operator.match(TokenType.RELATIONAL_OPERATOR)) {
+                    return "boolean"
+                } else {
+                    return "number"
+                }
+            }
+            default: return "auto"
+        }
+    }
+
+    /**
      * Defining a variable.
      */
     variableDeclaration() {
-        let variableType = "auto";
+        let variableType = undefined;
 
         this.eat("VARIABLE_DEFINITION")
 
@@ -416,7 +465,11 @@ export class Parser {
 
         this.eat("EQUALS")
 
-        return new VariableDeclarationNode(variableName, this.expression(), variableType)
+        const expression = this.expression();
+
+        if (!variableType) variableType = this.type(expression);
+
+        return new VariableDeclarationNode(variableName, expression, variableType)
     }
 
     codeBlock() {

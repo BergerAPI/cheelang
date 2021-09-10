@@ -1,4 +1,4 @@
-let name: string = "undefined :angry:"
+let name = "undefined :angry:"
 let index = 0
 
 while true {
@@ -6,8 +6,12 @@ while true {
     
     # println(index)
 
-    if index >= 10000 {
+    if index >= 100 {
         println("We did it! pog!")
         break
+    } else if index < 10 {
+        println("Yes!")
+    } else if index < 50 {
+        println("No!")
     }
 }

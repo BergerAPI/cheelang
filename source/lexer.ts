@@ -1,5 +1,5 @@
 // Every token with the correct regex
-class TokenType {
+export class TokenType {
     static STRING_LITERAL: RegExp = /^"([^"]*)"/;
     static INTEGER_LITERAL: RegExp = /^([0-9]+)/;
     static BOOLEAN_LITERAL: RegExp = /^(true|false)/

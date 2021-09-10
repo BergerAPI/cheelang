@@ -13,7 +13,7 @@ let integratedFunctions = {
  * Pog! If something = true, then do something
  */
 export function ifStatement(node: IfStatementNode) {
-    return "if (" + expression(node.condition) + ") \n" + "{ \n" + codeBlock(node.block).join("\n") + "\n}";
+    return "if (" + expression(node.condition) + ") \n" + "{ \n" + codeBlock(node.block).join("\n") + "\n} else { \n" + codeBlock(node.elseBlock).join("\n") + "\n}";
 }
 
 /**
