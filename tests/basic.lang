@@ -1,17 +1,9 @@
-let name = "undefined :angry:"
-let index = 0
+fn printSomethingPog() {
+    println!("SomethingPog (comedy gold)")
+}
 
-while true {
-    index = index + 2
-    
-    # println(index)
+fn main(): int {
+    let name = "undefined :angry:"
 
-    if index >= 100 {
-        println("We did it! pog!")
-        break
-    } else if index < 10 {
-        println("Yes!")
-    } else if index < 50 {
-        println("No!")
-    }
+    printSomethingPog()
 }

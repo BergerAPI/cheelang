@@ -189,6 +189,21 @@ export class BreakStatementNode implements AstNode {
     name: string = "BreakStatementNode";
 }
 
+export class FunctionDeclarationNode implements AstNode {
+    name: string = "FunctionDeclarationNode";
+    functionName: string;
+    args: AstNode[];
+    block: CodeBlockNode;
+    returnType: string;
+
+    constructor(functionName: string, args: AstNode[], block: CodeBlockNode, returnType: string) {
+        this.functionName = functionName;
+        this.args = args;
+        this.block = block;
+        this.returnType = returnType
+    }
+}
+
 /**
  * Here we build the 
  */
@@ -334,10 +349,15 @@ export class Parser {
 
         this.eat("IDENTIFIER");
 
-        if (this.token && this.token.type == "LEFT_PARENTHESIS") {
+        if (this.token && (this.token.type == "LEFT_PARENTHESIS" || this.token.type == "EXCLAMATION_MARK")) {
+            let integrated = false
             const args = []
 
-            this.eat("LEFT_PARENTHESIS")
+            if (this.token.type == "EXCLAMATION_MARK") {
+                this.eat("EXCLAMATION_MARK")
+                integrated = true
+                this.eat("LEFT_PARENTHESIS")
+            } else this.eat("LEFT_PARENTHESIS")
 
             while (this.token != undefined && this.token.raw != ")") {
                 args.push(this.expression())
@@ -348,7 +368,7 @@ export class Parser {
 
             this.eat("RIGHT_PARENTHESIS")
 
-            return new CallExpressionNode(token.raw, args, true)
+            return new CallExpressionNode(token.raw, args, integrated)
         } else {
             this.eat("EQUALS");
 
@@ -472,6 +492,46 @@ export class Parser {
         return new VariableDeclarationNode(variableName, expression, variableType)
     }
 
+    /**
+     * A basic function definition (e.g. function x(a, b) {...})
+     */
+    functionDeclaration() {
+        let returnType = "void"
+        const parameters = []
+        const nodes = []
+
+        this.eat("FUNCTION_DEFINITION")
+
+        const name = this.token.raw;
+
+        this.eat("IDENTIFIER")
+        this.eat("LEFT_PARENTHESIS")
+
+        while (this.token != undefined && this.token.raw != ")") {
+            parameters.push(this.variableDeclaration())
+
+            if (this.token != undefined && this.token.raw == ",")
+                this.eat("COMMA")
+        }
+
+        this.eat("RIGHT_PARENTHESIS")
+
+        if (this.token.type == "COLON") {
+            this.eat("COLON");
+            returnType = this.token.raw
+            this.eat("IDENTIFIER")
+        }
+
+        this.eat("LEFT_BRACE");
+
+        while (this.token != undefined && this.token.type != "RIGHT_BRACE")
+            nodes.push(this.codeBlock());
+
+        this.eat("RIGHT_BRACE");
+
+        return new FunctionDeclarationNode(name, parameters, new CodeBlockNode(nodes), returnType);
+    }
+
     codeBlock() {
         let node: any = undefined;
 
@@ -482,6 +542,10 @@ export class Parser {
 
             case "WHILE_STATEMENT":
                 node = this.whileStatement()
+                break;
+
+            case "FUNCTION_DEFINITION":
+                node = this.functionDeclaration()
                 break;
 
             case "BREAK_STATEMENT":

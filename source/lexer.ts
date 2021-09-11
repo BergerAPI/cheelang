@@ -15,6 +15,7 @@ export class TokenType {
     static RIGHT_BRACKET: RegExp = /^(\])/;
     static EQUALS: RegExp = /^(=)/;
     static FUNCTION_DEFINITION: RegExp = /^(fn)/;
+    static EXCLAMATION_MARK: RegExp = /^(!)/;
     static IF_STATEMENT: RegExp = /^(if)/;
     static ELSE_STATEMENT: RegExp = /^(else)/;
     static WHILE_STATEMENT: RegExp = /^(while)/;
