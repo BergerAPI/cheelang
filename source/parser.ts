@@ -204,6 +204,17 @@ export class FunctionDeclarationNode implements AstNode {
     }
 }
 
+export class FunctionParameterNode implements AstNode {
+    name: string = "FunctionParameterNode";
+    variableName: string;
+    variableType: string;
+
+    constructor(variableName: string, variableType: string) {
+        this.variableName = variableName;
+        this.variableType = variableType;
+    }
+}
+
 /**
  * Here we build the 
  */
@@ -508,7 +519,14 @@ export class Parser {
         this.eat("LEFT_PARENTHESIS")
 
         while (this.token != undefined && this.token.raw != ")") {
-            parameters.push(this.variableDeclaration())
+            const paramName = this.token.raw;
+            this.eat("IDENTIFIER")
+            this.eat("COLON")
+            const paramType = this.token.raw;
+
+            this.eat("IDENTIFIER")
+
+            parameters.push(new FunctionParameterNode(paramName, paramType))
 
             if (this.token != undefined && this.token.raw == ",")
                 this.eat("COMMA")

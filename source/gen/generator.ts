@@ -1,4 +1,4 @@
-import { AstNode, AstTree, BooleanLiteralNode, CallExpressionNode, CodeBlockNode, ExpressionNode, FunctionDeclarationNode, IfStatementNode, IntegerLiteralNode, StringLiteralNode, UnaryNode, VariableAssignmentNode, VariableDeclarationNode, VariableReferenceNode, WhileStatementNode } from "../parser";
+import { AstNode, AstTree, BooleanLiteralNode, CallExpressionNode, CodeBlockNode, ExpressionNode, FunctionDeclarationNode, FunctionParameterNode, IfStatementNode, IntegerLiteralNode, StringLiteralNode, UnaryNode, VariableAssignmentNode, VariableDeclarationNode, VariableReferenceNode, WhileStatementNode } from "../parser";
 import fs from "fs"
 
 export enum VariableTypes {
@@ -71,6 +71,9 @@ class CodeVariableDeclaration implements CodePart {
     }
 }
 
+/**
+ * Editing a c++ variable.
+ */
 class CodeVariableAssignment implements CodePart {
     name: string = "VariableAssignment"
     requiresEnd: boolean = true
@@ -78,7 +81,18 @@ class CodeVariableAssignment implements CodePart {
     constructor(public variableName: string, public variableValue: AstNode) { }
 
     toString(): string {
-        return `${this.variableName} = ${expression(this.variableValue)};`
+        return `${this.variableName} = ${expression(this.variableValue)}`
+    }
+}
+
+class CodeFunctionParameter implements CodePart {
+    name: string = "FunctionParameter"
+    requiresEnd: boolean = false
+
+    constructor(public variableType: VariableTypes, public variableName: string) { }
+
+    toString(): string {
+        return `${this.variableType} ${this.variableName}`
     }
 }
 
@@ -89,7 +103,7 @@ class CodeFunctionDeclaration implements CodePart {
     name: string = "FunctionDeclaration"
     requiresEnd: boolean = false
 
-    constructor(public functionName: string, public functionArgs: AstNode[], public functionCode: CodeBlock, public returnType: string) { }
+    constructor(public functionName: string, public functionArgs: CodePart[], public functionCode: CodeBlock, public returnType: string) { }
 
     toString(): string {
         let args = this.functionArgs.map(arg => arg.toString()).join(", ")
@@ -133,6 +147,32 @@ class CodeCallExpression implements CodePart {
     }
 }
 
+class CodeWhileStatement implements CodePart {
+    name: string = "WhileStatement"
+    requiresEnd: boolean = false
+
+    constructor(public condition: AstNode, public code: CodeBlock) { }
+
+    toString(): string {
+        return `while (${expression(this.condition)}) {
+                    ${this.code.toString()}
+                }`
+    }
+}
+
+class CodeIfStatement implements CodePart {
+    name: string = "IfStatement"
+    requiresEnd: boolean = false
+
+    constructor(public condition: AstNode, public code: CodeBlock) { }
+
+    toString(): string {
+        return `if (${expression(this.condition)}) {
+                    ${this.code.toString()}
+                }`
+    }
+}
+
 /**
  * A bunch of certain parts which turn themselfs to code.
  */
@@ -165,13 +205,22 @@ export class Generator {
 
         block.nodes.forEach(node => {
             if (node instanceof FunctionDeclarationNode)
-                generatedScope.sequence.push(new CodeFunctionDeclaration(node.functionName, node.args, this.generateScope(node.block), node.returnType))
+                generatedScope.sequence.push(new CodeFunctionDeclaration(node.functionName, node.args.map(item => {
+                    const casted = item as FunctionParameterNode
+                    return new CodeFunctionParameter(VariableTypes[Object.keys(VariableTypes).filter(e => e == casted.variableType.toUpperCase())[0] as keyof typeof VariableTypes], casted.variableName)
+                }), this.generateScope(node.block), node.returnType))
 
             if (node instanceof VariableDeclarationNode)
                 generatedScope.sequence.push(new CodeVariableDeclaration(VariableTypes[Object.keys(VariableTypes).filter(e => e == node.variableType.toUpperCase())[0] as keyof typeof VariableTypes], node.variableName, node.variableValue))
 
             if (node instanceof VariableAssignmentNode)
                 generatedScope.sequence.push(new CodeVariableAssignment(node.variableName, node.variableValue))
+
+            if (node instanceof WhileStatementNode)
+                generatedScope.sequence.push(new CodeWhileStatement(node.condition, this.generateScope(node.block)))
+
+            if (node instanceof IfStatementNode)
+                generatedScope.sequence.push(new CodeIfStatement(node.condition, this.generateScope(node.block)))
 
             if (node instanceof CallExpressionNode)
                 generatedScope.sequence.push(new CodeCallExpression(node.functionName, node.args, node.integrated))

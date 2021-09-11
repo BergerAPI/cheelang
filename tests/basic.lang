@@ -1,9 +1,13 @@
-fn printSomethingPog() {
-    println!("SomethingPog (comedy gold)")
+fn println(somethingPog: string, intPog: int) {
+    println!(somethingPog)
+    println!(intPog)
 }
 
 fn main(): int {
     let name = "undefined :angry:"
+    name = "Advanced naruto"
 
-    printSomethingPog()
+    if 1 + 1 == 2 {
+        println(name, 1)
+    }
 }
