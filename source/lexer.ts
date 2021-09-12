@@ -5,6 +5,7 @@ export class TokenType {
     static INTEGER_LITERAL: RegExp = /^([0-9]+)/;
     static BOOLEAN_LITERAL: RegExp = /^(true|false)/
     static COMMA: RegExp = /^(,)/;
+    static COMMENT: RegExp = /^(\/\/)/;
     static ARITHMETIC_OPERATOR: RegExp = /^([+-/*])/;
     static RELATIONAL_OPERATOR: RegExp = /^(&&|\|\||<=|>=|<|>|==|!=)/;
     static WHITESPACE: RegExp = /^(\s+)/;
@@ -25,7 +26,6 @@ export class TokenType {
     static VARIABLE_DEFINITION: RegExp = /^(let|const)/;
     static IDENTIFIER: RegExp = /^([a-zA-Z0-9_]+)/;
     static COLON: RegExp = /^(\:)/;
-    static COMMENT: RegExp = /^(\#)/;
 };
 
 // A basic token, that the lexer gonna put into his array

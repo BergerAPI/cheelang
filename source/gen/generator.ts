@@ -3,7 +3,7 @@ import fs from "fs"
 
 export enum VariableTypes {
     INT = "int",
-    FLOAT = "double",
+    FLOAT = "float",
     STRING = "std::string",
     CHAR = "char",
     AUTO = "auto"
@@ -188,6 +188,18 @@ class CodeReturnStatement implements CodePart {
     }
 }
 
+class HeaderFunctiondDeclaration implements CodePart {
+    name: string = "FunctionDeclaration"
+    requiresEnd: boolean = true
+
+    constructor(public functionName: string, public functionArgs: CodePart[], public returnType: string) { }
+
+    toString(): string {
+        let args = this.functionArgs.map(arg => arg.toString()).join(", ")
+        return `${this.returnType} ${this.functionName}(${args})`
+    }
+}
+
 /**
  * A bunch of certain parts which turn themselfs to code.
  */
@@ -197,6 +209,13 @@ class CodeBlock {
     toString(): string {
         return this.sequence.map(code => code.toString() + (code.requiresEnd ? ";" : "")).join("\n\n")
     }
+}
+
+/**
+ * A basic file (that other files can include due to header files)
+ */
+class CodeFile {
+
 }
 
 /**
@@ -212,6 +231,10 @@ export class Generator {
         this.tree = tree
     }
 
+    toCodeType(type: string): VariableTypes {
+        return VariableTypes[Object.keys(VariableTypes).filter(e => e == type.toUpperCase())[0] as keyof typeof VariableTypes]
+    }
+
     /**
      * Generates a scope.
      */
@@ -222,8 +245,9 @@ export class Generator {
             if (node instanceof FunctionDeclarationNode)
                 generatedScope.sequence.push(new CodeFunctionDeclaration(node.functionName, node.args.map(item => {
                     const casted = item as FunctionParameterNode
-                    return new CodeFunctionParameter(VariableTypes[Object.keys(VariableTypes).filter(e => e == casted.variableType.toUpperCase())[0] as keyof typeof VariableTypes], casted.variableName)
-                }), this.generateScope(node.block), VariableTypes[Object.keys(VariableTypes).filter(e => e == node.returnType.toUpperCase())[0] as keyof typeof VariableTypes]))
+
+                    return new CodeFunctionParameter(this.toCodeType(casted.variableType), casted.variableName)
+                }), this.generateScope(node.block), this.toCodeType(node.returnType)))
 
             if (node instanceof VariableDeclarationNode)
                 generatedScope.sequence.push(new CodeVariableDeclaration(VariableTypes[Object.keys(VariableTypes).filter(e => e == node.variableType.toUpperCase())[0] as keyof typeof VariableTypes], node.variableName, node.variableValue))
@@ -248,13 +272,36 @@ export class Generator {
     }
 
     /**
+     * Generates the c++ header codes.
+     */
+    generateHeader(block: CodeBlockNode): CodeBlock {
+        const header = new CodeBlock();
+
+        header.sequence.push(new CodeInclude("iostream"))
+        header.sequence.push(new CodeInclude("vector"))
+        header.sequence.push(new CodeInclude("string"))
+
+        block.nodes.forEach(node => {
+            if (node instanceof FunctionDeclarationNode)
+                header.sequence.push(new HeaderFunctiondDeclaration(node.functionName, node.args.map(item => {
+                    const casted = item as FunctionParameterNode
+
+                    return new CodeFunctionParameter(this.toCodeType(casted.variableType), casted.variableName)
+                }), this.toCodeType(node.returnType)))
+        });
+
+        return header
+    }
+
+    /**
      * Here happens the magic.
      */
-    work() {
+    work(name: string) {
         const generatedCode = this.generateScope(this.tree.block);
+        const headerCode = this.generateHeader(this.tree.block);
 
         // Global scope!
-        generatedCode.sequence.unshift(new CodeInclude("iostream"))
+        generatedCode.sequence.unshift(new CodeInclude(name + ".h"))
 
         // Generating the file. (pog we finished this shit)
         const dir = "output/bin"
@@ -262,6 +309,7 @@ export class Generator {
         if (!fs.existsSync(dir))
             fs.mkdirSync(dir, { recursive: true })
 
-        fs.writeFileSync(dir + "/main.cpp", generatedCode.toString())
+        fs.writeFileSync(dir + "/" + name + ".cpp", generatedCode.toString())
+        fs.writeFileSync(dir + "/" + name + ".h", headerCode.toString())
     }
 }

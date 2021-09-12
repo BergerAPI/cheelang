@@ -4,6 +4,7 @@ fn calculatePi(): float {
     return PI * 28
 }
 
+// Test Minecraft lmao
 fn main(): int {
     println!("We calculated Pi for you! Here's the result!")
     println!(calculatePi() + 20)
