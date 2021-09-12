@@ -1,6 +1,7 @@
 // Every token with the correct regex
 export class TokenType {
     static STRING_LITERAL: RegExp = /^"([^"]*)"/;
+    static FLOAT_LITERAL: RegExp = /^([0-9]+\.[0-9]+)/;
     static INTEGER_LITERAL: RegExp = /^([0-9]+)/;
     static BOOLEAN_LITERAL: RegExp = /^(true|false)/
     static COMMA: RegExp = /^(,)/;
@@ -22,7 +23,7 @@ export class TokenType {
     static BREAK_STATEMENT: RegExp = /^(break)/;
     static RETURN_STATEMENT: RegExp = /^(return)/;
     static VARIABLE_DEFINITION: RegExp = /^(let|const)/;
-    static IDENTIFIER: RegExp = /^([a-zA-Z0-9]+)/;
+    static IDENTIFIER: RegExp = /^([a-zA-Z0-9_]+)/;
     static COLON: RegExp = /^(\:)/;
     static COMMENT: RegExp = /^(\#)/;
 };

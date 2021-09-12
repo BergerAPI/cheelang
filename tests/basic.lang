@@ -1,13 +1,12 @@
-fn println(somethingPog: string, intPog: int) {
-    println!(somethingPog)
-    println!(intPog)
+let PI = 3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679
+
+fn calculatePi(): float {
+    return PI * 28
 }
 
 fn main(): int {
-    let name = "undefined :angry:"
-    name = "Advanced naruto"
+    println!("We calculated Pi for you! Here's the result!")
+    println!(calculatePi() + 20)
 
-    if 1 + 1 == 2 {
-        println(name, 1)
-    }
+    return EXIT_SUCCESS
 }

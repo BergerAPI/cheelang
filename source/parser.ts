@@ -114,7 +114,7 @@ export class StringLiteralNode implements AstNode {
     }
 }
 
-export class IntegerLiteralNode implements AstNode {
+export class NumberLiteralNode implements AstNode {
     name: string = "IntegerLiteralNode";
     value: number;
 
@@ -215,6 +215,19 @@ export class FunctionParameterNode implements AstNode {
     }
 }
 
+export class FunctionReturnNode implements AstNode {
+    name: string = "FunctionReturnNode";
+    value: AstNode;
+
+    constructor(value: AstNode) {
+        this.value = value;
+    }
+}
+
+export class NoneNode implements AstNode {
+    name: string = "NoneNode";
+}
+
 /**
  * Here we build the 
  */
@@ -270,9 +283,9 @@ export class Parser {
         if (tokenValue == "+" || tokenValue == "-") {
             this.eat(tokenName)
             return new UnaryNode(this.factor(), tokenValue)
-        } else if (tokenName == "INTEGER_LITERAL") {
+        } else if (tokenName == "INTEGER_LITERAL" || tokenName == "FLOAT_LITERAL") {
             this.eat(tokenName)
-            return new IntegerLiteralNode(parseInt(tokenValue))
+            return new NumberLiteralNode(parseFloat(tokenValue))
         } else if (tokenName == "STRING_LITERAL") {
             this.eat(tokenName)
             return new StringLiteralNode(tokenValue)
@@ -286,9 +299,7 @@ export class Parser {
             return result
         }
 
-        this.eat("IDENTIFIER");
-
-        return new VariableReferenceNode(tokenValue);
+        return this.identifier();
     }
 
     /**
@@ -355,7 +366,7 @@ export class Parser {
      * 
      * @return CallExpression Node || AssignmentExpression Node
      */
-    identifier() {
+    identifier(): AstNode {
         const token = this.token;
 
         this.eat("IDENTIFIER");
@@ -380,11 +391,13 @@ export class Parser {
             this.eat("RIGHT_PARENTHESIS")
 
             return new CallExpressionNode(token.raw, args, integrated)
-        } else {
+        } else if (this.token && this.token.type == "EQUALS") {
             this.eat("EQUALS");
 
             return new VariableAssignmentNode(token.raw, this.expression());
         }
+
+        return new VariableReferenceNode(token.raw);
     }
 
     /**
@@ -458,7 +471,7 @@ export class Parser {
         switch (expression.name) {
             case "StringLiteralNode": return "string"
             case "BooleanLiteralNode": return "boolean"
-            case "IntegerLiteralNode": return "int"
+            case "IntegerLiteralNode": return (expression as NumberLiteralNode).value % 1 == 0 ? "int" : "float"
             case "ExpressionNode": {
                 let operator = (expression as ExpressionNode).operator
 
@@ -550,12 +563,27 @@ export class Parser {
         return new FunctionDeclarationNode(name, parameters, new CodeBlockNode(nodes), returnType);
     }
 
+    /**
+     * Returning something from a function
+     */
+    returnStatement() {
+        this.eat("RETURN_STATEMENT")
+
+        if (this.token.type == "INTEGER_LITERAL" || this.token.type == "FLOAT_LITERAL" || this.token.type == "STRING_LITERAL" || this.token.type == "BOOLEAN_LITERAL" || this.token.type == "ARITHMETIC_OPERATOR" || this.token.type == "IDENTIFIER")
+            return new FunctionReturnNode(this.expression());
+        else return new FunctionReturnNode(new NoneNode())
+    }
+
     codeBlock() {
         let node: any = undefined;
 
         switch (this.token.type) {
             case "IF_STATEMENT":
                 node = this.ifStatement()
+                break;
+
+            case "RETURN_STATEMENT":
+                node = this.returnStatement()
                 break;
 
             case "WHILE_STATEMENT":

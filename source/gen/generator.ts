@@ -1,8 +1,9 @@
-import { AstNode, AstTree, BooleanLiteralNode, CallExpressionNode, CodeBlockNode, ExpressionNode, FunctionDeclarationNode, FunctionParameterNode, IfStatementNode, IntegerLiteralNode, StringLiteralNode, UnaryNode, VariableAssignmentNode, VariableDeclarationNode, VariableReferenceNode, WhileStatementNode } from "../parser";
+import { AstNode, AstTree, BooleanLiteralNode, CallExpressionNode, CodeBlockNode, ExpressionNode, FunctionDeclarationNode, FunctionParameterNode, FunctionReturnNode, IfStatementNode, NumberLiteralNode, StringLiteralNode, UnaryNode, VariableAssignmentNode, VariableDeclarationNode, VariableReferenceNode, WhileStatementNode } from "../parser";
 import fs from "fs"
 
 export enum VariableTypes {
     INT = "int",
+    FLOAT = "double",
     STRING = "std::string",
     CHAR = "char",
     AUTO = "auto"
@@ -37,13 +38,16 @@ function expression(node: AstNode): string {
             return (node as BooleanLiteralNode).value.toString();
 
         case "IntegerLiteralNode":
-            return (node as IntegerLiteralNode).value.toString();
+            return (node as NumberLiteralNode).value.toString();
 
         case "StringLiteralNode":
             return (node as StringLiteralNode).value.toString();
 
         case "VariableReferenceNode":
             return (node as VariableReferenceNode).variableName;
+
+        case "CallExpressionNode":
+            return (node as CallExpressionNode).functionName + "(" + (node as CallExpressionNode).args.map(expression).join(", ") + ")";
     }
 
     return ""
@@ -173,6 +177,17 @@ class CodeIfStatement implements CodePart {
     }
 }
 
+class CodeReturnStatement implements CodePart {
+    name: string = "ReturnStatement"
+    requiresEnd: boolean = true
+
+    constructor(public value: AstNode) { }
+
+    toString(): string {
+        return `return ${this.value.name != "NoneNode" ? expression(this.value) : ""}`
+    }
+}
+
 /**
  * A bunch of certain parts which turn themselfs to code.
  */
@@ -208,7 +223,7 @@ export class Generator {
                 generatedScope.sequence.push(new CodeFunctionDeclaration(node.functionName, node.args.map(item => {
                     const casted = item as FunctionParameterNode
                     return new CodeFunctionParameter(VariableTypes[Object.keys(VariableTypes).filter(e => e == casted.variableType.toUpperCase())[0] as keyof typeof VariableTypes], casted.variableName)
-                }), this.generateScope(node.block), node.returnType))
+                }), this.generateScope(node.block), VariableTypes[Object.keys(VariableTypes).filter(e => e == node.returnType.toUpperCase())[0] as keyof typeof VariableTypes]))
 
             if (node instanceof VariableDeclarationNode)
                 generatedScope.sequence.push(new CodeVariableDeclaration(VariableTypes[Object.keys(VariableTypes).filter(e => e == node.variableType.toUpperCase())[0] as keyof typeof VariableTypes], node.variableName, node.variableValue))
@@ -224,6 +239,9 @@ export class Generator {
 
             if (node instanceof CallExpressionNode)
                 generatedScope.sequence.push(new CodeCallExpression(node.functionName, node.args, node.integrated))
+
+            if (node instanceof FunctionReturnNode)
+                generatedScope.sequence.push(new CodeReturnStatement(node.value))
         })
 
         return generatedScope
