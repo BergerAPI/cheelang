@@ -24,6 +24,7 @@ export class TokenType {
     static BREAK_STATEMENT: RegExp = /^(break)/;
     static RETURN_STATEMENT: RegExp = /^(return)/;
     static VARIABLE_DEFINITION: RegExp = /^(let|const)/;
+    static USE_STATEMENT: RegExp = /^(@use)/;
     static IDENTIFIER: RegExp = /^([a-zA-Z0-9_]+)/;
     static COLON: RegExp = /^(\:)/;
 };

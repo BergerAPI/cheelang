@@ -1,4 +1,4 @@
-import { AstNode, AstTree, BooleanLiteralNode, CallExpressionNode, CodeBlockNode, ExpressionNode, FunctionDeclarationNode, FunctionParameterNode, FunctionReturnNode, IfStatementNode, NumberLiteralNode, StringLiteralNode, UnaryNode, VariableAssignmentNode, VariableDeclarationNode, VariableReferenceNode, WhileStatementNode } from "../parser";
+import { AstNode, AstTree, BooleanLiteralNode, CallExpressionNode, CodeBlockNode, ExpressionNode, FunctionDeclarationNode, FunctionParameterNode, FunctionReturnNode, IfStatementNode, NumberLiteralNode, StringLiteralNode, UnaryNode, UseStatementNode, VariableAssignmentNode, VariableDeclarationNode, VariableReferenceNode, WhileStatementNode } from "../parser";
 import fs from "fs"
 
 export enum VariableTypes {
@@ -288,6 +288,9 @@ export class Generator {
 
                     return new CodeFunctionParameter(this.toCodeType(casted.variableType), casted.variableName)
                 }), this.toCodeType(node.returnType)))
+
+            if (node instanceof UseStatementNode)
+                header.sequence.push(new CodeInclude(node.packageName.replaceAll('"', "").trim() + ".h"))
         });
 
         return header

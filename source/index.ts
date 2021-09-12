@@ -42,15 +42,21 @@ files.forEach(item => {
 
     generator.work(item.name.replace(/\.[^/.]+$/, ""))
 
-    exec('g++ -std=c++17 ./bin/main.cpp -o ./executable', { cwd: './output/' }, (err, stdout, stderr) => {
+    exec('clang-format ./output/bin/' + item.name.replace(/\.[^/.]+$/, "") + '.cpp', (err, stdout, stderr) => {
         if (stdout)
-            console.log(stdout)
-        if (stderr)
-            console.log(stderr)
-    });
-
-    exec('clang-format ./main.cpp', { cwd: './output/bin' }, (err, stdout, stderr) => {
-        if (stdout)
-            fs.writeFileSync('./output/bin/main.cpp', stdout)
+            fs.writeFileSync('./output/bin/' + item.name.replace(/\.[^/.]+$/, "") + '.cpp', stdout)
     });
 })
+
+const compileFiles: string[] = []
+
+files.forEach(file => {
+    compileFiles.push("./output/bin/" + file.name.replace(/\.[^/.]+$/, "") + ".cpp")
+})
+
+exec('g++ -std=c++17 ' + compileFiles.join(" ") + ' -o ./output/executable', (err, stdout, stderr) => {
+    if (stdout)
+        console.log(stdout)
+    if (stderr)
+        console.log(stderr)
+});

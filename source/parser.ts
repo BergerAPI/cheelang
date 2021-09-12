@@ -224,6 +224,15 @@ export class FunctionReturnNode implements AstNode {
     }
 }
 
+export class UseStatementNode implements AstNode {
+    name: string = "UseStatementNode";
+    packageName: string;
+
+    constructor(packageName: string) {
+        this.packageName = packageName;
+    }
+}
+
 export class NoneNode implements AstNode {
     name: string = "NoneNode";
 }
@@ -574,6 +583,18 @@ export class Parser {
         else return new FunctionReturnNode(new NoneNode())
     }
 
+    useStatement() {
+        this.eat("USE_STATEMENT")
+        this.eat("LEFT_PARENTHESIS")
+
+        const packageName = this.token.raw;
+
+        this.eat("STRING_LITERAL")
+        this.eat("RIGHT_PARENTHESIS")
+
+        return new UseStatementNode(packageName)
+    }
+
     codeBlock() {
         let node: any = undefined;
 
@@ -597,6 +618,10 @@ export class Parser {
             case "BREAK_STATEMENT":
                 this.eat("BREAK_STATEMENT")
                 node = new BreakStatementNode()
+                break;
+
+            case "USE_STATEMENT":
+                node = this.useStatement()
                 break;
 
             case "VARIABLE_DEFINITION":
