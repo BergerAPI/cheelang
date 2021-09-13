@@ -266,6 +266,28 @@ export class ClassDeclarationNode implements AstNode {
     }
 }
 
+export class NewStatementNode implements AstNode {
+    name: string = "NewStatementNode";
+    className: string;
+    args: AstNode[];
+
+    constructor(className: string, args: AstNode[]) {
+        this.className = className;
+        this.args = args;
+    }
+}
+
+export class PropertyAccessNode implements AstNode {
+    name: string = "PropertyAccessNode";
+    object: AstNode;
+    property: string;
+
+    constructor(object: AstNode, property: string) {
+        this.object = object;
+        this.property = property;
+    }
+}
+
 export class NoneNode implements AstNode {
     name: string = "NoneNode";
 }
@@ -378,6 +400,11 @@ export class Parser {
         if (!token)
             throw Error("Token = undefined?")
 
+        if (token.type == "NEW_STATEMENT") {
+            this.eat(token.type);
+            return this.identifier(true)
+        }
+
         // This expression has something to do with cring math or not
         let expr = this.term()
 
@@ -408,7 +435,7 @@ export class Parser {
      * 
      * @return CallExpression Node || AssignmentExpression Node
      */
-    identifier(): AstNode {
+    identifier(newInstance: boolean = false): AstNode {
         const token = this.token;
 
         this.eat("IDENTIFIER");
@@ -432,7 +459,9 @@ export class Parser {
 
             this.eat("RIGHT_PARENTHESIS")
 
-            return new CallExpressionNode(token.raw, args, integrated)
+            if (!newInstance)
+                return new CallExpressionNode(token.raw, args, integrated)
+            else return new NewStatementNode(token.raw, args)
         } else if (this.token && this.token.type == "EQUALS") {
             this.eat("EQUALS");
 
@@ -442,6 +471,10 @@ export class Parser {
             this.eat("COLON")
 
             return new NamespaceReferenceNode(token.raw, this.expression())
+        } else if (this.token.type == "DOT") {
+            this.eat("DOT")
+
+            return new PropertyAccessNode(this.identifier(), token.raw)
         }
 
         return new VariableReferenceNode(token.raw);
@@ -684,6 +717,15 @@ export class Parser {
     }
 
     /**
+     * Creating a new instance of a class.
+     */
+    newStatement() {
+        this.eat("NEW_STATEMENT")
+
+        return this.identifier(true)
+    }
+
+    /**
      * Checks what type a node is
      * @returns {AstNode}
      */
@@ -691,6 +733,10 @@ export class Parser {
         let node: any = undefined;
 
         switch (this.token.type) {
+            case "NEW_STATEMENT":
+                node = this.newStatement()
+                break;
+
             case "IF_STATEMENT":
                 node = this.ifStatement()
                 break;

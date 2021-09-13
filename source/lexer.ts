@@ -6,6 +6,7 @@ export class TokenType {
     static BOOLEAN_LITERAL: RegExp = /^(true|false)/
     static COMMA: RegExp = /^(,)/;
     static COMMENT: RegExp = /^(\/\/)/;
+    static DOT: RegExp = /^(\.)/;
     static ARITHMETIC_OPERATOR: RegExp = /^([+-/*])/;
     static RELATIONAL_OPERATOR: RegExp = /^(&&|\|\||<=|>=|<|>|==|!=)/;
     static WHITESPACE: RegExp = /^(\s+)/;
@@ -27,6 +28,7 @@ export class TokenType {
     static USE_STATEMENT: RegExp = /^(@use)/;
     static NAMESPACE_STATEMENT: RegExp = /^(@namespace)/;
     static CLASS_DEFINITION: RegExp = /^(class)/;
+    static NEW_STATEMENT: RegExp = /^(new)/;
     static PRIVATE_KEYWORD: RegExp = /^(private)/;
     static IDENTIFIER: RegExp = /^([a-zA-Z0-9_]+)/;
     static COLON: RegExp = /^(\:)/;

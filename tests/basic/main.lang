@@ -26,7 +26,6 @@
 // Test Minecraft lmao
 fn main(): int {
     println!(calculatePi()) // auch mal wieder da du huso
-    println!(system!("whoami"))
 
     basic::main::test2()
 }

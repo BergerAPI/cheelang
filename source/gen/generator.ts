@@ -1,4 +1,4 @@
-import { AstNode, AstTree, BooleanLiteralNode, CallExpressionNode, ClassDeclarationNode, CodeBlockNode, ExpressionNode, FunctionDeclarationNode, FunctionParameterNode, FunctionReturnNode, IfStatementNode, NamespaceDeclarationNode, NamespaceReferenceNode, NumberLiteralNode, StringLiteralNode, UnaryNode, UseStatementNode, VariableAssignmentNode, VariableDeclarationNode, VariableReferenceNode, WhileStatementNode } from "../parser";
+import { AstNode, AstTree, BooleanLiteralNode, CallExpressionNode, ClassDeclarationNode, CodeBlockNode, ExpressionNode, FunctionDeclarationNode, FunctionParameterNode, FunctionReturnNode, IfStatementNode, NamespaceDeclarationNode, NamespaceReferenceNode, NewStatementNode, NumberLiteralNode, PropertyAccessNode, StringLiteralNode, UnaryNode, UseStatementNode, VariableAssignmentNode, VariableDeclarationNode, VariableReferenceNode, WhileStatementNode } from "../parser";
 import fs from "fs"
 
 export enum VariableTypes {
@@ -50,6 +50,12 @@ function expression(node: AstNode): string {
 
         case "CallExpressionNode":
             return (node as CallExpressionNode).functionName + "(" + (node as CallExpressionNode).args.map(expression).join(", ") + ")";
+
+        case "NewStatementNode":
+            return "new " + (node as NewStatementNode).className + "(" + (node as NewStatementNode).args.map(expression).join(", ") + ")";
+
+        case "PropertyAccessNode":
+            return (node as PropertyAccessNode).property + "->" + expression((node as PropertyAccessNode).object);
     }
 
     return ""
@@ -228,6 +234,17 @@ class CodeClassDeclaration implements CodePart {
     }
 }
 
+class CodeNewStatement implements CodePart {
+    name: string = "NewStatement"
+    requiresEnd: boolean = false
+
+    constructor(public className: string, public args: AstNode[]) { }
+
+    toString(): string {
+        return `new ${this.className}(${this.args.map(arg => expression(arg)).join(", ")})`
+    }
+}
+
 class CodeNone implements CodePart {
     name: string = "None"
     requiresEnd: boolean = false
@@ -311,6 +328,9 @@ export class Generator {
 
         if (node instanceof ClassDeclarationNode)
             return new CodeClassDeclaration(node.className, this.generateScope(node.block));
+
+        if (node instanceof NewStatementNode)
+            return new CodeNewStatement(node.className, node.args)
 
         return new CodeNone()
     }
