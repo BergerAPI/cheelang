@@ -255,6 +255,17 @@ export class NamespaceReferenceNode implements AstNode {
     }
 }
 
+export class ClassDeclarationNode implements AstNode {
+    name: string = "ClassDeclarationNode";
+    className: string;
+    block: CodeBlockNode;
+
+    constructor(className: string, block: CodeBlockNode) {
+        this.className = className;
+        this.block = block;
+    }
+}
+
 export class NoneNode implements AstNode {
     name: string = "NoneNode";
 }
@@ -610,6 +621,10 @@ export class Parser {
         else return new FunctionReturnNode(new NoneNode())
     }
 
+    /**
+     * A basic import.
+     * @returns {AstNode}
+     */
     useStatement() {
         this.eat("USE_STATEMENT")
         this.eat("LEFT_PARENTHESIS")
@@ -622,6 +637,10 @@ export class Parser {
         return new UseStatementNode(packageName)
     }
 
+    /**
+     * A namespace to keep things clean.
+     * @returns {AstNode}
+     */
     namespaceStatement() {
         this.eat("NAMESPACE_STATEMENT")
         this.eat("LEFT_PARENTHESIS")
@@ -642,6 +661,32 @@ export class Parser {
         return new NamespaceDeclarationNode(name, new CodeBlockNode(nodes))
     }
 
+    /**
+     * A basic class.
+     */
+    classDeclaration() {
+        this.eat("CLASS_DEFINITION")
+
+        const name = this.token.raw;
+
+        this.eat("IDENTIFIER")
+
+        const nodes = []
+
+        this.eat("LEFT_BRACE");
+
+        while (this.token != undefined && this.token.type != "RIGHT_BRACE")
+            nodes.push(this.codeBlock());
+
+        this.eat("RIGHT_BRACE");
+
+        return new ClassDeclarationNode(name, new CodeBlockNode(nodes))
+    }
+
+    /**
+     * Checks what type a node is
+     * @returns {AstNode}
+     */
     codeBlock() {
         let node: any = undefined;
 
@@ -673,6 +718,10 @@ export class Parser {
 
             case "NAMESPACE_STATEMENT":
                 node = this.namespaceStatement()
+                break;
+
+            case "CLASS_DEFINITION":
+                node = this.classDeclaration()
                 break;
 
             case "VARIABLE_DEFINITION":

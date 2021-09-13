@@ -26,6 +26,8 @@ export class TokenType {
     static VARIABLE_DEFINITION: RegExp = /^(let|const)/;
     static USE_STATEMENT: RegExp = /^(@use)/;
     static NAMESPACE_STATEMENT: RegExp = /^(@namespace)/;
+    static CLASS_DEFINITION: RegExp = /^(class)/;
+    static PRIVATE_KEYWORD: RegExp = /^(private)/;
     static IDENTIFIER: RegExp = /^([a-zA-Z0-9_]+)/;
     static COLON: RegExp = /^(\:)/;
 };

@@ -1,4 +1,4 @@
-import { AstNode, AstTree, BooleanLiteralNode, CallExpressionNode, CodeBlockNode, ExpressionNode, FunctionDeclarationNode, FunctionParameterNode, FunctionReturnNode, IfStatementNode, NamespaceDeclarationNode, NamespaceReferenceNode, NumberLiteralNode, StringLiteralNode, UnaryNode, UseStatementNode, VariableAssignmentNode, VariableDeclarationNode, VariableReferenceNode, WhileStatementNode } from "../parser";
+import { AstNode, AstTree, BooleanLiteralNode, CallExpressionNode, ClassDeclarationNode, CodeBlockNode, ExpressionNode, FunctionDeclarationNode, FunctionParameterNode, FunctionReturnNode, IfStatementNode, NamespaceDeclarationNode, NamespaceReferenceNode, NumberLiteralNode, StringLiteralNode, UnaryNode, UseStatementNode, VariableAssignmentNode, VariableDeclarationNode, VariableReferenceNode, WhileStatementNode } from "../parser";
 import fs from "fs"
 
 export enum VariableTypes {
@@ -214,6 +214,20 @@ class CodeNamespaceReference implements CodePart {
     }
 }
 
+class CodeClassDeclaration implements CodePart {
+    name: string = "ClassDeclaration"
+    requiresEnd: boolean = true
+
+    constructor(public className: string, public code: CodeBlock) { }
+
+    toString(): string {
+        return `class ${this.className} {
+                    public:
+                        ${this.code.toString()}
+                }`
+    }
+}
+
 class CodeNone implements CodePart {
     name: string = "None"
     requiresEnd: boolean = false
@@ -294,6 +308,9 @@ export class Generator {
 
         if (node instanceof NamespaceReferenceNode)
             return new CodeNamespaceReference(node.namespaceName, this.generateCodePart(node.block));
+
+        if (node instanceof ClassDeclarationNode)
+            return new CodeClassDeclaration(node.className, this.generateScope(node.block));
 
         return new CodeNone()
     }
