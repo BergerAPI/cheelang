@@ -25,6 +25,7 @@ export class TokenType {
     static RETURN_STATEMENT: RegExp = /^(return)/;
     static VARIABLE_DEFINITION: RegExp = /^(let|const)/;
     static USE_STATEMENT: RegExp = /^(@use)/;
+    static NAMESPACE_STATEMENT: RegExp = /^(@namespace)/;
     static IDENTIFIER: RegExp = /^([a-zA-Z0-9_]+)/;
     static COLON: RegExp = /^(\:)/;
 };
@@ -85,12 +86,6 @@ export class Lexer {
 
         if (line == undefined) return undefined
 
-        // This is a comment. We hate them.
-        if (line.trim().startsWith("#")) {
-            this.line++;
-            return this.next(peek);
-        };
-
         // We need the nearest match here.
         if (line.replace(" ", "").length != 0)
             for (let key of Object.keys(TokenType)) {
@@ -104,6 +99,11 @@ export class Lexer {
 
                 if (key == "WHITESPACE")
                     return this.next(peek)
+
+                if (key == "COMMENT") {
+                    this.line++;
+                    return this.next(peek);
+                }
 
                 return new Token(
                     this.line, this.rawContent[this.line].length - this.content[this.line].length,

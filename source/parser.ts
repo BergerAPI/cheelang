@@ -233,6 +233,28 @@ export class UseStatementNode implements AstNode {
     }
 }
 
+export class NamespaceDeclarationNode implements AstNode {
+    name: string = "NamespaceDeclarationNode";
+    namespaceName: string;
+    block: CodeBlockNode;
+
+    constructor(namespaceName: string, block: CodeBlockNode) {
+        this.namespaceName = namespaceName;
+        this.block = block;
+    }
+}
+
+export class NamespaceReferenceNode implements AstNode {
+    name: string = "NamespaceReferenceNode";
+    namespaceName: string;
+    block: AstNode;
+
+    constructor(namespaceName: string, block: AstNode) {
+        this.namespaceName = namespaceName;
+        this.block = block;
+    }
+}
+
 export class NoneNode implements AstNode {
     name: string = "NoneNode";
 }
@@ -289,7 +311,7 @@ export class Parser {
         const tokenValue = this.token.raw
         const tokenName = this.token.type
 
-        if (tokenValue == "+" || tokenValue == "-") {
+        if (tokenValue == "+" || tokenValue == "-" || tokenValue == "!") {
             this.eat(tokenName)
             return new UnaryNode(this.factor(), tokenValue)
         } else if (tokenName == "INTEGER_LITERAL" || tokenName == "FLOAT_LITERAL") {
@@ -404,6 +426,11 @@ export class Parser {
             this.eat("EQUALS");
 
             return new VariableAssignmentNode(token.raw, this.expression());
+        } else if (this.token.type == "COLON") {
+            this.eat("COLON")
+            this.eat("COLON")
+
+            return new NamespaceReferenceNode(token.raw, this.expression())
         }
 
         return new VariableReferenceNode(token.raw);
@@ -487,7 +514,7 @@ export class Parser {
                 if (operator.match(TokenType.RELATIONAL_OPERATOR)) {
                     return "boolean"
                 } else {
-                    return "number"
+                    return "float"
                 }
             }
             default: return "auto"
@@ -595,6 +622,26 @@ export class Parser {
         return new UseStatementNode(packageName)
     }
 
+    namespaceStatement() {
+        this.eat("NAMESPACE_STATEMENT")
+        this.eat("LEFT_PARENTHESIS")
+
+        const name = this.token.raw;
+        const nodes = []
+
+        this.eat("STRING_LITERAL")
+        this.eat("RIGHT_PARENTHESIS")
+
+        this.eat("LEFT_BRACE");
+
+        while (this.token != undefined && this.token.type != "RIGHT_BRACE")
+            nodes.push(this.codeBlock());
+
+        this.eat("RIGHT_BRACE");
+
+        return new NamespaceDeclarationNode(name, new CodeBlockNode(nodes))
+    }
+
     codeBlock() {
         let node: any = undefined;
 
@@ -622,6 +669,10 @@ export class Parser {
 
             case "USE_STATEMENT":
                 node = this.useStatement()
+                break;
+
+            case "NAMESPACE_STATEMENT":
+                node = this.namespaceStatement()
                 break;
 
             case "VARIABLE_DEFINITION":

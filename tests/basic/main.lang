@@ -1,9 +1,20 @@
 @use("pog")
 
+@namespace("basic") {
+    fn test() {
+        let x = 1
+        let y = 2
+        let z = 3
+        let a = x + y + z
+
+        println!(a)
+    }
+}
+
 // Test Minecraft lmao
 fn main(): int {
-    println!("We calculated Pi for you! Here's the result!")
-    println!(calculatePi() + 20)
+    println!(calculatePi()) // auch mal wieder da du huso
+    println!(system!("whoami"))
 
-    return EXIT_SUCCESS
+    basic::test()
 }
