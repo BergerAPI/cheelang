@@ -19,50 +19,81 @@ let integratedFunctions = {
     "system": { requiredArguments: 1, value: "std::system($1)" }
 }
 
+function generateCodePart(node: AstNode): CodePart {
+    if (node instanceof FunctionDeclarationNode)
+        return new CodeFunctionDeclaration(node.functionName, node.args.map(item => {
+            const casted = item as FunctionParameterNode
+
+            return new CodeFunctionParameter(toCodeType(casted.variableType), casted.variableName)
+        }), generateScope(node.block), toCodeType(node.returnType));
+
+    if (node instanceof VariableDeclarationNode)
+        return new CodeVariableDeclaration(VariableTypes[Object.keys(VariableTypes).filter(e => e == node.variableType.toUpperCase())[0] as keyof typeof VariableTypes], node.variableName, node.variableValue);
+
+    if (node instanceof ExpressionNode)
+        return new CodeNone("(" + generateCodePart(node.left) + " " + node.operator + " " + generateCodePart(node.right) + ")")
+
+    if (node instanceof UnaryNode)
+        return new CodeNone("(" + node.operator + generateCodePart(node.operand) + ")")
+
+    if (node instanceof BooleanLiteralNode)
+        return new CodeNone(node.value.toString())
+
+    if (node instanceof StringLiteralNode)
+        return new CodeNone(node.value.toString())
+
+    if (node instanceof NumberLiteralNode)
+        return new CodeNone(node.value.toString())
+
+    if (node instanceof VariableReferenceNode)
+        return new CodeNone(node.variableName)
+
+    if (node instanceof PropertyAccessNode)
+        return new CodeNone(node.property + "->" + generateCodePart((node as PropertyAccessNode).object))
+
+    if (node instanceof VariableAssignmentNode)
+        return new CodeVariableAssignment(node.variableName, node.variableValue);
+
+    if (node instanceof WhileStatementNode)
+        return new CodeWhileStatement(node.condition, generateScope(node.block));
+
+    if (node instanceof IfStatementNode)
+        return new CodeIfStatement(node.condition, generateScope(node.block));
+
+    if (node instanceof CallExpressionNode)
+        return new CodeCallExpression(node.functionName, node.args, node.integrated);
+
+    if (node instanceof FunctionReturnNode)
+        return new CodeReturnStatement(node.value)
+
+    if (node instanceof NamespaceDeclarationNode)
+        return new CodeNamespaceDeclaration(node.namespaceName, generateScope(node.block));
+
+    if (node instanceof NamespaceReferenceNode)
+        return new CodeNamespaceReference(node.namespaceName, generateCodePart(node.block));
+
+    if (node instanceof ClassDeclarationNode)
+        return new CodeClassDeclaration(node.className, generateScope(node.block));
+
+    if (node instanceof NewStatementNode)
+        return new CodeNewStatement(node.className, node.args)
+
+    return new CodeNone()
+}
+
 /**
-    * From code to expression (ast) and then to code again.
-    */
-function expression(node: AstNode): string {
-    switch (node.name) {
-        case "ExpressionNode": {
-            let typeNode = node as ExpressionNode
+ * Generates a scope.
+ */
+function generateScope(block: CodeBlockNode): CodeBlock {
+    const generatedScope = new CodeBlock();
 
-            return "(" + expression(typeNode.left) + " " + typeNode.operator + " " + expression(typeNode.right) + ")"
-        };
+    block.nodes.forEach(node => generatedScope.sequence.push(generateCodePart(node)))
 
-        case "UnaryNode": {
-            let typeNode = node as UnaryNode
+    return generatedScope
+}
 
-            return typeNode.operator + expression(typeNode.operand)
-        }
-
-        case "BooleanLiteralNode":
-            return (node as BooleanLiteralNode).value.toString();
-
-        case "IntegerLiteralNode":
-            return (node as NumberLiteralNode).value.toString();
-
-        case "StringLiteralNode":
-            return (node as StringLiteralNode).value.toString();
-
-        case "VariableReferenceNode":
-            return (node as VariableReferenceNode).variableName;
-
-        case "CallExpressionNode":
-            return (node as CallExpressionNode).functionName + "(" + (node as CallExpressionNode).args.map(expression).join(", ") + ")";
-
-        case "NewStatementNode":
-            return "new " + (node as NewStatementNode).className + "(" + (node as NewStatementNode).args.map(expression).join(", ") + ")";
-
-        case "PropertyAccessNode":
-            return (node as PropertyAccessNode).property + "->" + expression((node as PropertyAccessNode).object);
-
-        case "NamespaceReferenceNode":
-            return (node as NamespaceReferenceNode).namespaceName + "::" + expression((node as NamespaceReferenceNode).block);
-
-    }
-
-    return ""
+function toCodeType(type: string): VariableTypes {
+    return VariableTypes[Object.keys(VariableTypes).filter(e => e == type.toUpperCase())[0] as keyof typeof VariableTypes]
 }
 
 /**
@@ -83,7 +114,7 @@ class CodeVariableDeclaration implements CodePart {
     constructor(public variableType: VariableTypes, public variableName: string, public variableValue: AstNode) { }
 
     toString(): string {
-        return `${this.variableType} ${this.variableName} = ${expression(this.variableValue)}`
+        return `${this.variableType} ${this.variableName} = ${generateCodePart(this.variableValue)}`
     }
 }
 
@@ -97,7 +128,7 @@ class CodeVariableAssignment implements CodePart {
     constructor(public variableName: string, public variableValue: AstNode) { }
 
     toString(): string {
-        return `${this.variableName} = ${expression(this.variableValue)}`
+        return `${this.variableName} = ${generateCodePart(this.variableValue)}`
     }
 }
 
@@ -151,12 +182,12 @@ class CodeCallExpression implements CodePart {
 
     toString(): string {
         if (!this.integrated)
-            return `${this.functionName}(${this.args.map(arg => expression(arg)).join(", ")})`
+            return `${this.functionName}(${this.args.map(arg => generateCodePart(arg)).join(", ")})`
         else {
             const integratedFunction = integratedFunctions[this.functionName as keyof typeof integratedFunctions]
             let value = integratedFunction.value.toString();
 
-            this.args.forEach((item, index) => value = integratedFunction.value.replace("$" + (index + 1), expression(item)))
+            this.args.forEach((item, index) => value = integratedFunction.value.replace("$" + (index + 1), generateCodePart(item).toString()))
 
             return value
         }
@@ -170,7 +201,7 @@ class CodeWhileStatement implements CodePart {
     constructor(public condition: AstNode, public code: CodeBlock) { }
 
     toString(): string {
-        return `while (${expression(this.condition)}) {
+        return `while (${generateCodePart(this.condition)}) {
                     ${this.code.toString()}
                 }`
     }
@@ -183,7 +214,7 @@ class CodeIfStatement implements CodePart {
     constructor(public condition: AstNode, public code: CodeBlock) { }
 
     toString(): string {
-        return `if (${expression(this.condition)}) {
+        return `if (${generateCodePart(this.condition)}) {
                     ${this.code.toString()}
                 }`
     }
@@ -196,7 +227,7 @@ class CodeReturnStatement implements CodePart {
     constructor(public value: AstNode) { }
 
     toString(): string {
-        return `return ${this.value.name != "NoneNode" ? expression(this.value) : ""}`
+        return `return ${this.value.name != "NoneNode" ? generateCodePart(this.value) : ""}`
     }
 }
 
@@ -245,7 +276,7 @@ class CodeNewStatement implements CodePart {
     constructor(public className: string, public args: AstNode[]) { }
 
     toString(): string {
-        return `new ${this.className}(${this.args.map(arg => expression(arg)).join(", ")})`
+        return `new ${this.className}(${this.args.map(arg => generateCodePart(arg)).join(", ")})`
     }
 }
 
@@ -253,8 +284,10 @@ class CodeNone implements CodePart {
     name: string = "None"
     requiresEnd: boolean = false
 
+    constructor(public input: string = "") { }
+
     toString(): string {
-        return ""
+        return this.input
     }
 }
 
@@ -294,62 +327,6 @@ export class Generator {
         this.tree = tree
     }
 
-    toCodeType(type: string): VariableTypes {
-        return VariableTypes[Object.keys(VariableTypes).filter(e => e == type.toUpperCase())[0] as keyof typeof VariableTypes]
-    }
-
-    generateCodePart(node: AstNode): CodePart {
-        if (node instanceof FunctionDeclarationNode)
-            return new CodeFunctionDeclaration(node.functionName, node.args.map(item => {
-                const casted = item as FunctionParameterNode
-
-                return new CodeFunctionParameter(this.toCodeType(casted.variableType), casted.variableName)
-            }), this.generateScope(node.block), this.toCodeType(node.returnType));
-
-        if (node instanceof VariableDeclarationNode)
-            return new CodeVariableDeclaration(VariableTypes[Object.keys(VariableTypes).filter(e => e == node.variableType.toUpperCase())[0] as keyof typeof VariableTypes], node.variableName, node.variableValue);
-
-        if (node instanceof VariableAssignmentNode)
-            return new CodeVariableAssignment(node.variableName, node.variableValue);
-
-        if (node instanceof WhileStatementNode)
-            return new CodeWhileStatement(node.condition, this.generateScope(node.block));
-
-        if (node instanceof IfStatementNode)
-            return new CodeIfStatement(node.condition, this.generateScope(node.block));
-
-        if (node instanceof CallExpressionNode)
-            return new CodeCallExpression(node.functionName, node.args, node.integrated);
-
-        if (node instanceof FunctionReturnNode)
-            return new CodeReturnStatement(node.value)
-
-        if (node instanceof NamespaceDeclarationNode)
-            return new CodeNamespaceDeclaration(node.namespaceName, this.generateScope(node.block));
-
-        if (node instanceof NamespaceReferenceNode)
-            return new CodeNamespaceReference(node.namespaceName, this.generateCodePart(node.block));
-
-        if (node instanceof ClassDeclarationNode)
-            return new CodeClassDeclaration(node.className, this.generateScope(node.block));
-
-        if (node instanceof NewStatementNode)
-            return new CodeNewStatement(node.className, node.args)
-
-        return new CodeNone()
-    }
-
-    /**
-     * Generates a scope.
-     */
-    generateScope(block: CodeBlockNode): CodeBlock {
-        const generatedScope = new CodeBlock();
-
-        block.nodes.forEach(node => generatedScope.sequence.push(this.generateCodePart(node)))
-
-        return generatedScope
-    }
-
     /**
      * Generates the type of the header
      */
@@ -358,8 +335,8 @@ export class Generator {
             return new HeaderFunctiondDeclaration(node.functionName, node.args.map(item => {
                 const casted = item as FunctionParameterNode
 
-                return new CodeFunctionParameter(this.toCodeType(casted.variableType), casted.variableName)
-            }), this.toCodeType(node.returnType))
+                return new CodeFunctionParameter(toCodeType(casted.variableType), casted.variableName)
+            }), toCodeType(node.returnType))
 
         if (node instanceof UseStatementNode)
             return new CodeInclude(node.packageName.replaceAll('"', "").trim() + ".h")
@@ -408,7 +385,7 @@ export class Generator {
      * Here happens the magic.
      */
     work(name: string) {
-        const generatedCode = this.generateScope(this.tree.block);
+        const generatedCode = generateScope(this.tree.block);
         const headerCode = this.generateHeader(this.tree.block);
 
         // Global scope!
