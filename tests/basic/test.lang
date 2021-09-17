@@ -2,4 +2,10 @@
     fn n_cos(value: float): float {
         return cos(value)
     }
+
+    class Test {
+        fn run() {
+            println!(n_cos(10000))
+        }
+    }
 }

@@ -2,5 +2,9 @@
 
 // Test Minecraft lmao
 fn main(): int {
+    let test = new math::Test()
+
+    test.run()
+
     println!(math::n_cos(200.0))
 }

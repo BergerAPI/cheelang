@@ -49,7 +49,7 @@ function generateCodePart(node: AstNode): CodePart {
         return new CodeNone(node.variableName)
 
     if (node instanceof PropertyAccessNode)
-        return new CodeNone(node.property + "->" + generateCodePart((node as PropertyAccessNode).object))
+        return new CodeNone(node.property + "." + generateCodePart((node as PropertyAccessNode).object), true)
 
     if (node instanceof VariableAssignmentNode)
         return new CodeVariableAssignment(node.variableName, node.variableValue);
@@ -73,7 +73,7 @@ function generateCodePart(node: AstNode): CodePart {
         return new CodeNamespaceReference(node.namespaceName, generateCodePart(node.block));
 
     if (node instanceof ClassDeclarationNode)
-        return new CodeClassDeclaration(node.className, generateScope(node.block));
+        return new CodeClassDeclaration(node.className, generateScope(node.block).clasify(node.className));
 
     if (node instanceof NewStatementNode)
         return new CodeNewStatement(node.className, node.args)
@@ -150,11 +150,17 @@ class CodeFunctionDeclaration implements CodePart {
     name: string = "FunctionDeclaration"
     requiresEnd: boolean = false
 
-    constructor(public functionName: string, public functionArgs: CodePart[], public functionCode: CodeBlock, public returnType: string) { }
+    constructor(public functionName: string, public functionArgs: CodePart[], public functionCode: CodeBlock, public returnType: string, public pClass: string = "") { }
+
+    clasify(name: string): CodeFunctionDeclaration {
+        this.pClass = name
+
+        return this
+    }
 
     toString(): string {
         let args = this.functionArgs.map(arg => arg.toString()).join(", ")
-        return `${this.returnType} ${this.functionName}(${args}) {
+        return `${this.returnType} ${this.pClass != "" ? this.pClass + "::" : ""}${this.functionName}(${args}) {
                     ${this.functionCode.toString()}
                 }`
     }
@@ -255,7 +261,7 @@ class CodeNamespaceReference implements CodePart {
     }
 }
 
-class CodeClassDeclaration implements CodePart {
+class HeaderClassDeclaration implements CodePart {
     name: string = "ClassDeclaration"
     requiresEnd: boolean = true
 
@@ -266,6 +272,17 @@ class CodeClassDeclaration implements CodePart {
                     public:
                         ${this.code.toString()}
                 }`
+    }
+}
+
+class CodeClassDeclaration implements CodePart {
+    name: string = "ClassDeclaration"
+    requiresEnd: boolean = true
+
+    constructor(public className: string, public code: CodeBlock) { }
+
+    toString(): string {
+        return `${this.code.toString()}`
     }
 }
 
@@ -284,7 +301,9 @@ class CodeNone implements CodePart {
     name: string = "None"
     requiresEnd: boolean = false
 
-    constructor(public input: string = "") { }
+    constructor(public input: string = "", end: boolean = false) {
+        this.requiresEnd = end
+    }
 
     toString(): string {
         return this.input
@@ -309,8 +328,29 @@ class HeaderFunctiondDeclaration implements CodePart {
 class CodeBlock {
     sequence: CodePart[] = []
 
+    constructor(public pClass: string = "", sequence: CodePart[] = []) {
+        this.sequence = sequence
+    }
+
+    clasify(className: string): CodeBlock {
+        this.pClass = className;
+
+        return this
+    }
+
     toString(): string {
-        return this.sequence.map(code => code.toString() + (code.requiresEnd ? ";" : "")).join("\n\n")
+        let mapped: any[] = []
+
+        this.sequence.forEach(part => {
+            let result = part.toString()
+
+            if (part instanceof CodeFunctionDeclaration)
+                result = part.clasify(this.pClass).toString()
+
+            mapped.push(result + (part.requiresEnd ? ";" : ""))
+        });
+
+        return mapped.join("\n\n")
     }
 }
 
@@ -356,6 +396,9 @@ export class Generator {
 
         if (node instanceof NamespaceDeclarationNode)
             return new CodeNamespaceDeclaration(node.namespaceName, this.generateHeaderType(node.block))
+
+        if (node instanceof ClassDeclarationNode)
+            return new HeaderClassDeclaration(node.className, this.generateHeaderType(node.block))
 
         return undefined
     }
