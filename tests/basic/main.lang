@@ -1,31 +1,6 @@
-@use("pog")
-
-@namespace("basic") {
-    @namespace("main") {
-        let x = 5
-
-        fn test2() {
-            let y = 2
-            let z = 3
-            let a = x + y + z
-
-            println!(a)
-        }
-    }
-
-    fn test() {
-        let x = 1
-        let y = 2
-        let z = 3
-        let a = x + y + z
-
-        println!(a)
-    }
-}
+@use("test")
 
 // Test Minecraft lmao
 fn main(): int {
-    println!(calculatePi()) // auch mal wieder da du huso
-
-    basic::main::test2()
+    println!(math::n_cos(200.0))
 }

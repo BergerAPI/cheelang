@@ -56,6 +56,10 @@ function expression(node: AstNode): string {
 
         case "PropertyAccessNode":
             return (node as PropertyAccessNode).property + "->" + expression((node as PropertyAccessNode).object);
+
+        case "NamespaceReferenceNode":
+            return (node as NamespaceReferenceNode).namespaceName + "::" + expression((node as NamespaceReferenceNode).block);
+
     }
 
     return ""
@@ -347,6 +351,39 @@ export class Generator {
     }
 
     /**
+     * Generates the type of the header
+     */
+    generateHeaderType(node: AstNode): any {
+        if (node instanceof FunctionDeclarationNode)
+            return new HeaderFunctiondDeclaration(node.functionName, node.args.map(item => {
+                const casted = item as FunctionParameterNode
+
+                return new CodeFunctionParameter(this.toCodeType(casted.variableType), casted.variableName)
+            }), this.toCodeType(node.returnType))
+
+        if (node instanceof UseStatementNode)
+            return new CodeInclude(node.packageName.replaceAll('"', "").trim() + ".h")
+
+        if (node instanceof CodeBlockNode) {
+            let codeBlock = new CodeBlock()
+
+            node.nodes.forEach(item => {
+                let result = this.generateHeaderType(item)
+
+                if (result != undefined)
+                    codeBlock.sequence.push(result)
+            })
+
+            return codeBlock
+        }
+
+        if (node instanceof NamespaceDeclarationNode)
+            return new CodeNamespaceDeclaration(node.namespaceName, this.generateHeaderType(node.block))
+
+        return undefined
+    }
+
+    /**
      * Generates the c++ header codes.
      */
     generateHeader(block: CodeBlockNode): CodeBlock {
@@ -355,18 +392,14 @@ export class Generator {
         header.sequence.push(new CodeInclude("iostream"))
         header.sequence.push(new CodeInclude("vector"))
         header.sequence.push(new CodeInclude("string"))
+        header.sequence.push(new CodeInclude("cmath"))
 
-        block.nodes.forEach(node => {
-            if (node instanceof FunctionDeclarationNode)
-                header.sequence.push(new HeaderFunctiondDeclaration(node.functionName, node.args.map(item => {
-                    const casted = item as FunctionParameterNode
+        let headerType = this.generateHeaderType(block)
 
-                    return new CodeFunctionParameter(this.toCodeType(casted.variableType), casted.variableName)
-                }), this.toCodeType(node.returnType)))
-
-            if (node instanceof UseStatementNode)
-                header.sequence.push(new CodeInclude(node.packageName.replaceAll('"', "").trim() + ".h"))
-        });
+        if (headerType != undefined)
+            headerType.sequence.forEach((item: CodePart) => {
+                header.sequence.push(item)
+            })
 
         return header
     }

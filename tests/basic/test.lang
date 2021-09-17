@@ -1,0 +1,5 @@
+@namespace("math") {
+    fn n_cos(value: float): float {
+        return cos(value)
+    }
+}
