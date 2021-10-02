@@ -14,13 +14,6 @@ export const logger = winston.createLogger({
 				winston.format.simple()
 			)
 		}),
-		new winston.transports.Console({
-			level: "debug",
-			format: winston.format.combine(
-				winston.format.colorize(),
-				winston.format.simple()
-			)
-		}),
 	]
 });
 

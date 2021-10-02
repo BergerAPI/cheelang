@@ -1,4 +1,11 @@
 /**
+ * A simple part in the ast node.
+ */
+export interface AstNode {
+	type: string;
+}
+
+/**
  * Some cool expression (e.g. `a + b`)
  */
 export class ExpressionNode implements AstNode {
@@ -9,12 +16,8 @@ export class ExpressionNode implements AstNode {
 }
 
 /**
- * A simple part in the ast node.
+ * Negative numbers (e.g. `-1`)
  */
-export interface AstNode {
-	type: string;
-}
-
 export class UnaryNode implements AstNode {
 	type = "UnaryNode";
 

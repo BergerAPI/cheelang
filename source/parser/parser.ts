@@ -57,7 +57,7 @@ export class Parser {
 			return new BooleanLiteralNode(tokenValue == "true");
 		} else if (tokenName == "LEFT_PARENTHESIS") {
 			this.expect("LEFT_PARENTHESIS");
-			const result = this.expression();
+			const result = this.expression(false);
 			this.expect("RIGHT_PARENTHESIS");
 			return result;
 		}
@@ -90,7 +90,7 @@ export class Parser {
 	/**
 	 * Parsing an expression.
 	 */
-	private expression(): AstNode {
+	private expression(alone: boolean): AstNode {
 		const token = this.token;
 
 		if (!token)
@@ -114,8 +114,11 @@ export class Parser {
 
 			this.expect("RELATIONAL_OPERATOR");
 
-			return new ExpressionNode(expr, this.expression(), operator);
+			return new ExpressionNode(expr, this.expression(false), operator);
 		}
+
+		if ((alone && !this.token) || (alone && this.token.raw != "."))
+			logger.warn("Expression stands alone without a statement. Line: " + (this.token ? this.token.line.toString() : this.lexer.line.toString()));
 
 		return expr;
 	}
@@ -133,7 +136,7 @@ export class Parser {
 			case "STRING_LITERAL":
 			case "INTEGER_LITERAL":
 			case "LEFT_PARENTHESIS":
-				node = this.expression();
+				node = this.expression(true);
 				break;
 			default:
 				this.token = this.lexer.next();
