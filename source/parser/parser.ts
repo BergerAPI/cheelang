@@ -132,6 +132,7 @@ export class Parser {
 			case "FLOAT_LITERAL":
 			case "STRING_LITERAL":
 			case "INTEGER_LITERAL":
+			case "LEFT_PARENTHESIS":
 				node = this.expression();
 				break;
 			default:
