@@ -1,3 +1,6 @@
+import { exit } from "process";
+import { logger } from ".";
+
 // Every token with the correct regex
 export class TokenType {
 	static STRING_LITERAL = /^"([^"]*)"/;
@@ -65,18 +68,21 @@ export class Lexer {
 	content: string[];
 	rawContent: string[];
 
-	constructor(content: string) {
-		this.content = content.split("\n").map(item => item.trim());
+	constructor(content: string[]) {
+		this.content = content.join("\n").split("\n").map(item => item.trim());
 		this.rawContent = [...this.content];
 	}
 
 	/**
 	 * Getting the next token (this method increases the position.)
 	 */
-	next(peek = false): unknown {
+	next(peek = false): Token {
 		const line = this.content[this.line];
 
-		if (line == undefined) return undefined;
+		if (line == undefined) {
+			logger.error("Somehow, the line is undefined.");
+			exit(1);
+		}
 
 		// We need the nearest match here.
 		if (line.replace(" ", "").length != 0)
@@ -108,7 +114,8 @@ export class Lexer {
 			return this.next(peek);
 		}
 
-		return undefined;
+		logger.error("This shouldn't happen, but it did.");
+		exit(1);
 	}
 
 	/**

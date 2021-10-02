@@ -1,11 +1,21 @@
 #! /usr/bin/env node
 import { exit } from "process";
 import winston from "winston";
+import fs from "fs";
+import { Lexer } from "./lexer";
+import { Parser } from "./parser/parser";
 
 // Basic logger
 export const logger = winston.createLogger({
 	transports: [
 		new winston.transports.Console({
+			format: winston.format.combine(
+				winston.format.colorize(),
+				winston.format.simple()
+			)
+		}),
+		new winston.transports.Console({
+			level: "debug",
 			format: winston.format.combine(
 				winston.format.colorize(),
 				winston.format.simple()
@@ -62,7 +72,36 @@ args.forEach((it) => {
 });
 
 if (files.length > 0) {
-	logger.info(files);
+
+	if (options.debug.value) logger.debug("Getting the input files.");
+
+	const fileContents: string[] = files.map((it) => {
+		fs.readFile(it, "utf8", (err, data) => {
+			if (err) {
+				logger.error(`Error while reading ${it}.`);
+				exit(1);
+			}
+
+			return data;
+		});
+
+		return "";
+	});
+
+	if (options.debug.value) logger.debug(`Input files: ${files.join(", ")}`);
+	if (options.debug.value) logger.debug("Initialising lexer.");
+
+	const lexer: Lexer = new Lexer(fileContents);
+
+	if (options.debug.value) logger.debug("Lexer initialised.");
+	if (options.debug.value) logger.debug("Starting Parser.");
+
+	const parser: Parser = new Parser(lexer);
+
+	if (options.debug.value) logger.debug("Started Parser.");
+	if (options.debug.value) logger.debug("Starting Generator.");
+
+
 } else {
 	logger.error("You need to provide files to compile.");
 	exit(1);
