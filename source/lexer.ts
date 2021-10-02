@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { exit } from "process";
 import { logger } from ".";
 
@@ -76,13 +77,11 @@ export class Lexer {
 	/**
 	 * Getting the next token (this method increases the position.)
 	 */
-	next(peek = false): Token {
+	next(peek = false): any {
 		const line = this.content[this.line];
 
-		if (line == undefined) {
-			logger.error("Somehow, the line is undefined.");
-			exit(1);
-		}
+		if (line == undefined) return undefined;
+
 
 		// We need the nearest match here.
 		if (line.replace(" ", "").length != 0)

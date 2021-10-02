@@ -76,16 +76,12 @@ if (files.length > 0) {
 	if (options.debug.value) logger.debug("Getting the input files.");
 
 	const fileContents: string[] = files.map((it) => {
-		fs.readFile(it, "utf8", (err, data) => {
-			if (err) {
-				logger.error(`Error while reading ${it}.`);
-				exit(1);
-			}
-
-			return data;
-		});
-
-		return "";
+		try {
+			return fs.readFileSync(it, "utf8").toString();
+		} catch (error) {
+			logger.error(`Could not read file ${it}`);
+			exit();
+		}
 	});
 
 	if (options.debug.value) logger.debug(`Input files: ${files.join(", ")}`);
@@ -98,9 +94,10 @@ if (files.length > 0) {
 
 	const parser: Parser = new Parser(lexer);
 
+	console.log(JSON.stringify(parser.parse(), null, 4));
+
 	if (options.debug.value) logger.debug("Started Parser.");
 	if (options.debug.value) logger.debug("Starting Generator.");
-
 
 } else {
 	logger.error("You need to provide files to compile.");
