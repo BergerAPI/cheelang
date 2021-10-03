@@ -4,9 +4,11 @@ import winston from "winston";
 import fs from "fs";
 import { Lexer } from "./lexer";
 import { Parser } from "./parser/parser";
+import { Generator } from "./generator/generator";
 
 // Basic logger
 export const logger = winston.createLogger({
+	level: "debug",
 	transports: [
 		new winston.transports.Console({
 			format: winston.format.combine(
@@ -87,11 +89,18 @@ if (files.length > 0) {
 
 	const parser: Parser = new Parser(lexer);
 
-	console.log(JSON.stringify(parser.parse(), null, 4));
-
-	if (options.debug.value) logger.debug("Started Parser.");
+	if (options.debug.value) logger.debug("Parser started.");
 	if (options.debug.value) logger.debug("Starting Generator.");
 
+	const generator: Generator = new Generator(parser.parse());
+
+	if (options.debug.value) logger.debug("Generator started.");
+	if (options.debug.value) logger.debug("Generating code.");
+
+	generator.generate("out.o");
+
+	if (options.debug.value) logger.debug("Code generated.");
+	if (options.debug.value) logger.debug("Compiling ASM and Linking.");
 } else {
 	logger.error("You need to provide files to compile.");
 	exit(1);

@@ -1,3 +1,4 @@
+import { AstTree } from "../parser/ast";
 import { Parser } from "../parser/parser";
 
 /**
@@ -5,14 +6,14 @@ import { Parser } from "../parser/parser";
  */
 export class Generator {
 
-	constructor(public parser: Parser) {
+	constructor(public parser: AstTree) {
 
 	}
 
 	/**
 	 * Generating the code.
 	 */
-	public generate() {
+	public generate(path: string) {
 		console.log("s");
 	}
 

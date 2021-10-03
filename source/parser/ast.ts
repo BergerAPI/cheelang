@@ -1,3 +1,11 @@
+
+/**
+ * A basic Ast.
+ */
+export class AstTree {
+	constructor(public type: string, public children: AstNode[]) { }
+}
+
 /**
  * A simple part in the ast node.
  */

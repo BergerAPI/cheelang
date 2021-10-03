@@ -2,7 +2,7 @@
 import { exit } from "process";
 import { logger } from "..";
 import { Lexer, Token } from "../lexer";
-import { AstNode, BooleanLiteralNode, ExpressionNode, NumberLiteralNode, StringLiteralNode, UnaryNode } from "./ast";
+import { AstNode, AstTree, BooleanLiteralNode, ExpressionNode, NumberLiteralNode, StringLiteralNode, UnaryNode } from "./ast";
 
 /**
  * Syntax checking and preparing the Abstract Syntax Tree (AST) for the
@@ -148,8 +148,8 @@ export class Parser {
 	/**
 	 * Creating the tree.
 	 */
-	parse(): unknown {
-		const block = [];
+	parse(): AstTree {
+		const block: AstNode[] = [];
 
 		while (this.token) {
 			const node = this.decidePart();
@@ -162,10 +162,7 @@ export class Parser {
 			}
 		}
 
-		return {
-			name: "Program",
-			block: block
-		};
+		return new AstTree("Program", block);
 	}
 
 }
