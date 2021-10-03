@@ -11,8 +11,8 @@ export class AssemblyInstruction {
 	 * 
 	 * @example label: mnemonic [operandArgument{0,3}] [;comment]
 	 */
-	constructor(public mnemonic: string, public destinationOperand: string,
-		public sourceOperand: string = "none", public comment: string = "none") { }
+	constructor(public mnemonic: string, public destinationOperand: string = "none",
+		public sourceOperand: string = "none", public comment: string = "none", public ignoreSemi: boolean = false) { }
 
 	/**
 	 * Putting everything together
@@ -23,7 +23,7 @@ export class AssemblyInstruction {
 	 * 			= ``mov rax, 0x02000004``
 	 */
 	build(): string {
-		return `${this.mnemonic} ${this.destinationOperand}${this.sourceOperand !== "none" ? ", " + this.sourceOperand : ""}	${this.comment !== "none" ? "; " + this.comment : ""}`;
+		return `${this.mnemonic} ${this.destinationOperand !== "none" ? this.destinationOperand : ""}${this.sourceOperand !== "none" ? ((!this.ignoreSemi ? ", " : " ") + this.sourceOperand) : ""}	${this.comment !== "none" ? ("; " + this.comment) : ""}`;
 	}
 
 }
@@ -86,14 +86,17 @@ export class Assmebly {
 	/**
 	 * The current section
 	 */
-	private currentSection = 0
+	private currentSection = 0;
+
+	/**
+	 * The last section
+	 */
+	private lastSection = 0;
 
 	/**
 	 * Basically just setting the current section.
 	 */
 	constructor(mainFunction: string) {
-		this.setSection(".data");
-		this.sectionInstruction("test", "db", "\"test\", 10", "Test thingy");
 		this.setSection(".text");
 		this.sectionInstruction("global", mainFunction, "none", "Main function");
 		this.setLabel(mainFunction);
@@ -104,7 +107,7 @@ export class Assmebly {
 	 * 
 	 * @see AssemblyInstruction
 	 */
-	public instruction(mnemonic: string, destinationOperand: string, sourceOperand = "none", comment = "none"): void {
+	public instruction(mnemonic: string, destinationOperand = "none", sourceOperand = "none", comment = "none"): void {
 		this.labels[this.currentLabel].instructions.push(new AssemblyInstruction(mnemonic, destinationOperand, sourceOperand, comment));
 	}
 
@@ -114,7 +117,14 @@ export class Assmebly {
 	 * @see AssemblyInstruction
 	 */
 	public sectionInstruction(mnemonic: string, destinationOperand: string, sourceOperand = "none", comment = "none"): void {
-		this.sections[this.currentSection].instructions.push(new AssemblyInstruction(mnemonic, destinationOperand, sourceOperand, comment));
+		this.sections[this.currentSection].instructions.push(new AssemblyInstruction(mnemonic, destinationOperand, sourceOperand, comment, true));
+	}
+
+	/**
+	 * Going back to the last section.
+	 */
+	public backSection(): void {
+		this.currentSection = this.lastSection;
 	}
 
 	/**
@@ -123,25 +133,25 @@ export class Assmebly {
 	public build(): string {
 		let sourceCode = "";
 
-		for (const section of this.sections) {
+		this.sections.forEach((section, index) => {
 			sourceCode += `section ${section.name}`;
 
 			for (const instruction of section.instructions)
 				sourceCode += `\n	${instruction.build()}`;
 
-			sourceCode += "\n\n";
+			if (index < this.sections.length - 1)
+				sourceCode += "\n\n";
 
 			if (section.name === ".text")
-				this.labels.forEach((label, index) => {
+				this.labels.forEach(label => {
 					sourceCode += `${label.name}:`;
 
 					for (const instruction of label.instructions)
 						sourceCode += `\n	${instruction.build()}`;
 
-					if (index !== this.labels.length - 1)
-						sourceCode += "\n\n";
+					sourceCode += "\n\n";
 				});
-		}
+		});
 
 		return sourceCode;
 	}
@@ -164,6 +174,8 @@ export class Assmebly {
 	 * Setting the current label
 	 */
 	public setSection(section: string): void {
+
+		this.lastSection = this.currentSection;
 
 		if (this.sections.find(f => f.name === section) != undefined)
 			this.currentSection = this.sections.findIndex(f => f.name === section);
