@@ -82,7 +82,6 @@ export class Lexer {
 
 		if (line == undefined) return undefined;
 
-
 		// We need the nearest match here.
 		if (line.replace(" ", "").length != 0)
 			for (const key of Object.keys(TokenType)) {

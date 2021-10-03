@@ -1,20 +1,27 @@
 import { AstTree } from "../parser/ast";
-import { Parser } from "../parser/parser";
+import { Assmebly } from "./assembly";
 
 /**
  * Generating the asm code.
  */
 export class Generator {
 
-	constructor(public parser: AstTree) {
+	/**
+	 * Assmebly syntax.
+	 */
+	assembly: Assmebly = new Assmebly("_main");
 
+	constructor(public tree: AstTree) {
 	}
 
 	/**
 	 * Generating the code.
 	 */
 	public generate(path: string) {
-		console.log("s");
+		this.assembly.setLabel("_main");
+		this.assembly.instruction("mov", "eax", "0", "Doing something.");
+
+		console.log(this.assembly.build());
 	}
 
 }

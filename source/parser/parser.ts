@@ -2,7 +2,7 @@
 import { exit } from "process";
 import { logger } from "..";
 import { Lexer, Token } from "../lexer";
-import { AstNode, AstTree, BooleanLiteralNode, ExpressionNode, NumberLiteralNode, StringLiteralNode, UnaryNode } from "./ast";
+import { AstNode, AstTree, BooleanLiteralNode, CallNode, ExpressionNode, NumberLiteralNode, StringLiteralNode, UnaryNode, VariableNode } from "./ast";
 
 /**
  * Syntax checking and preparing the Abstract Syntax Tree (AST) for the
@@ -29,7 +29,7 @@ export class Parser {
 		if (this.token.type == tokenType)
 			this.token = this.lexer.next();
 		else {
-			logger.error(`Expceted ${tokenType} but we got ${this.token.type}.`);
+			logger.error(`Expceted ${tokenType} but we got ${this.token.type} at line ${this.token.line}.`);
 			exit(1);
 		}
 
@@ -62,7 +62,7 @@ export class Parser {
 			return result;
 		}
 
-		return undefined;
+		return this.identifier();
 	}
 
 	/**
@@ -85,6 +85,40 @@ export class Parser {
 		}
 
 		return node;
+	}
+
+	/**
+	 * Parsing an identifier that could be a variable or a function for example.
+	 */
+	private identifier(): AstNode {
+		const token = this.token;
+
+		// We know that we have an identifer token.
+		this.expect("IDENTIFIER");
+
+		// Probably a function call
+		if (this.token.type === "LEFT_PARENTHESIS") {
+			this.expect("LEFT_PARENTHESIS");
+
+			const args: AstNode[] = [];
+
+			// Somehow, we have to use raw here, since otherwise typescript cries that this will
+			// always return true
+			while (this.token.raw !== ")") {
+				args.push(this.expression(false));
+
+				// Same thing why we use the raw token here
+				if (this.token.raw != ")")
+					this.expect("COMMA");
+			}
+
+			this.expect("RIGHT_PARENTHESIS");
+
+			return new CallNode(token.raw, args);
+		}
+
+		// If its not a function, it must be a variable reference.
+		return new VariableNode(token.raw);
 	}
 
 	/**
@@ -136,6 +170,7 @@ export class Parser {
 			case "STRING_LITERAL":
 			case "INTEGER_LITERAL":
 			case "LEFT_PARENTHESIS":
+			case "IDENTIFIER":
 				node = this.expression(true);
 				break;
 			default:

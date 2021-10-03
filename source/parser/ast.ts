@@ -62,3 +62,23 @@ export class BooleanLiteralNode implements AstNode {
 	constructor(public value: boolean) {
 	}
 }
+
+/**
+ * Referencing a variable.
+ */
+export class VariableNode implements AstNode {
+	type = "VariableNode";
+
+	constructor(public name: string) {
+	}
+}
+
+/**
+ * Calling a function.
+ */
+export class CallNode implements AstNode {
+	type = "CallNode";
+
+	constructor(public name: string, public args: AstNode[]) {
+	}
+}
