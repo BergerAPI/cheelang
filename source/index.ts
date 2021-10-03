@@ -6,6 +6,7 @@ import { Lexer } from "./lexer";
 import { Parser } from "./parser/parser";
 import { Generator } from "./generator/generator";
 import { exec } from "child_process";
+import os from "os";
 
 // Basic logger
 export const logger = winston.createLogger({
@@ -41,6 +42,11 @@ export const files: string[] = [];
 
 // Our cli arguments but without the default nodejs shit
 const args = process.argv.slice(2);
+
+if (os.platform() !== "linux" && os.platform() !== "darwin") {
+	logger.error("This tool only works on linux and macos");
+	exit(1);
+}
 
 // Checking for the input file and some options
 args.forEach((it) => {
