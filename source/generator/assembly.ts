@@ -29,6 +29,19 @@ export class AssemblyInstruction {
 }
 
 /**
+ * A basic variable. We basically store the number of this variable
+ * in this class, and the corrosponding name.
+ */
+export class AssemblyVariable {
+
+	/**
+	 * @param name The name of the label.
+	 */
+	constructor(public name: string, public value: string, public size: number, public stack: number) { }
+
+}
+
+/**
  * A basic assembly function.
  * 
  * @example ```
@@ -46,6 +59,11 @@ export class AssemblyLabel {
 	instructions: AssemblyInstruction[] = [];
 
 	/**
+	 * Every variable, so we can re-identify them.
+	 */
+	variables: AssemblyVariable[] = [];
+
+	/**
 	 * @param name The name of the label.
 	 */
 	constructor(public name: string) { }
@@ -58,6 +76,21 @@ export class AssemblySection {
 	instructions: AssemblyInstruction[] = [];
 
 	/**
+	 * All labels in this section.
+	 */
+	labels: AssemblyLabel[] = [];
+
+	/**
+	 * The current label
+	 */
+	currentLabel = 0;
+
+	/**
+	 * The last label
+	 */
+	lastLabel = 0;
+
+	/**
 	 * @param name The name of the section.
 	 */
 	constructor(public name: string) { }
@@ -67,16 +100,6 @@ export class AssemblySection {
  * basic assembly functions.
  */
 export class Assmebly {
-
-	/**
-	 * All labels
-	 */
-	private labels: AssemblyLabel[] = [];
-
-	/**
-	 * The current label
-	 */
-	private currentLabel = 0;
 
 	/**
 	 * All sections
@@ -108,7 +131,31 @@ export class Assmebly {
 	 * @see AssemblyInstruction
 	 */
 	public instruction(mnemonic: string, destinationOperand = "none", sourceOperand = "none", comment = "none"): void {
-		this.labels[this.currentLabel].instructions.push(new AssemblyInstruction(mnemonic, destinationOperand, sourceOperand, comment));
+		const section = this.sections[this.currentSection];
+
+		section.labels[section.currentLabel].instructions.push(new AssemblyInstruction(mnemonic, destinationOperand, sourceOperand, comment));
+	}
+
+	/**
+	 * Labels can have variables. We need to store the number of the variable and the name here.
+	 */
+	public addValidVariable(name: string, value: string, stack: number): void {
+		const section = this.sections[this.currentSection];
+
+		section.labels[section.currentLabel].variables.push(new AssemblyVariable(name, value, Math.ceil(value.length / 4), stack));
+	}
+
+	/**
+	 * Getting every valid variable.
+	 * 
+	 * @returns all valid variables
+	 */
+	public getValidVariables(): AssemblyVariable[] {
+		const section = this.sections[this.currentSection];
+
+		if (section.labels[section.currentLabel])
+			return section.labels[section.currentLabel].variables;
+		else return [];
 	}
 
 	/**
@@ -128,6 +175,15 @@ export class Assmebly {
 	}
 
 	/**
+	 * Going back to the last label.
+	 */
+	public backLabel(): void {
+		const section = this.sections[this.currentSection];
+
+		section.currentLabel = section.lastLabel;
+	}
+
+	/**
 	 * Building the entire source code together.
 	 */
 	public build(): string {
@@ -139,18 +195,17 @@ export class Assmebly {
 			for (const instruction of section.instructions)
 				sourceCode += `\n	${instruction.build()}`;
 
+			section.labels.forEach(label => {
+				sourceCode += `\n${label.name}:`;
+
+				for (const instruction of label.instructions)
+					sourceCode += `\n	${instruction.build()}`;
+
+				sourceCode += "\n\n";
+			});
+
 			if (index < this.sections.length - 1)
 				sourceCode += "\n\n";
-
-			if (section.name === ".text")
-				this.labels.forEach(label => {
-					sourceCode += `${label.name}:`;
-
-					for (const instruction of label.instructions)
-						sourceCode += `\n	${instruction.build()}`;
-
-					sourceCode += "\n\n";
-				});
 		});
 
 		return sourceCode;
@@ -160,12 +215,15 @@ export class Assmebly {
 	 * Setting the current label
 	 */
 	public setLabel(label: string): void {
+		const section = this.sections[this.currentSection];
 
-		if (this.labels.find(f => f.name === label) != undefined)
-			this.currentLabel = this.labels.findIndex(f => f.name === label);
+		section.lastLabel = section.currentLabel;
+
+		if (section.labels.find(f => f.name === label) != undefined)
+			section.currentLabel = section.labels.findIndex(f => f.name === label);
 		else {
-			this.labels.push(new AssemblyLabel(label));
-			this.currentLabel = this.labels.length - 1;
+			section.labels.push(new AssemblyLabel(label));
+			section.currentLabel = section.labels.length - 1;
 		}
 
 	}
