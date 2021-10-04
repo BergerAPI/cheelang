@@ -17,7 +17,7 @@ export class Generator {
 	/**
 	 * How big our stack for local variables currently is.
 	 */
-	stackSize = 4_096;
+	stackSize = 262_144;
 
 	/**
 	 * How big we have to split the stack.
@@ -66,6 +66,16 @@ export class Generator {
 		}
 
 		this.assembly.instruction("syscall");
+	}
+
+	/**
+	 * Doing the same as print but only printing a string.
+	 */
+	printText(message: string): void {
+		const name = "tmp." + this.assembly.getValidVariables().length;
+
+		this.defineVariable(name, message + "\\n");
+		this.print(name, "none");
 	}
 
 	/**
@@ -139,13 +149,9 @@ export class Generator {
 		this.assembly.backLabel();
 		this.assembly.backSection();
 
-		this.assembly.instruction("mov", "rsp", "rsp", "Allocating memory for the stack.");
-
-		this.defineVariable("chee", "Hello Chee!!\\n");
-		this.print("chee");
-
-		this.defineVariable("tturna", "Hello Peu sdfdjbsdfuhshui osudhfgk sjvfsdhjvfgjvsdjvgf sdjvfjhv sdhgjfhjsdfhjgsdfhjsdjvfvjsdh sdgvfjgv!!\\n");
-		this.print("tturna");
+		// Here begins the actual program.
+		this.printText("Test Test Test Test Test Test Test");
+		this.printText("Dies ist offiziell ein Test von der Nasa. Bitte beachten sie alle Regeln.");
 
 		// Leaving the program.
 		this.exit();
