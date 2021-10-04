@@ -22,8 +22,8 @@ export class Generator {
 	/**
 	 * How big we have to split the stack.
 	 */
-	stackSteps = 8;
-	regexSteps = /.{1,8}/g
+	stackSteps = 4;
+	regexSteps = /.{1,4}/g
 
 	constructor(public tree: AstTree) {
 	}
