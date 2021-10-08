@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { exit } from "process";
-import { logger } from "..";
+import fs from "fs";
+import { logger, options } from "..";
 import { Lexer, Token } from "../lexer";
 import { AstNode, AstTree, BooleanLiteralNode, CallNode, ExpressionNode, NumberLiteralNode, StringLiteralNode, UnaryNode, VariableNode } from "./ast";
 
@@ -197,7 +198,13 @@ export class Parser {
 			}
 		}
 
-		return new AstTree("Program", block);
+		const result = new AstTree("Program", block);
+
+		if (options.tree.value) {
+			fs.writeFileSync("./build/tree.json", JSON.stringify(result, null, 4));
+		}
+
+		return result;
 	}
 
 }

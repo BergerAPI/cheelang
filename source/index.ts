@@ -34,6 +34,10 @@ export const options = {
 	"debug": {
 		short: "d",
 		value: false
+	},
+	"tree": {
+		short: "t",
+		value: false
 	}
 };
 

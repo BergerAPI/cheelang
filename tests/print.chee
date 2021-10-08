@@ -1,0 +1,2 @@
+print("Hello. This is an official message from Chee and Cheelang.")
+print("ne_mene", "Hello!", "Tturna", "Hello!", 1.001, 2, 3, true, false)

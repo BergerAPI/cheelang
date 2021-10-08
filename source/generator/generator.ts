@@ -1,7 +1,7 @@
 import fs from "fs";
 import { exit } from "process";
 import { logger } from "..";
-import { AstTree } from "../parser/ast";
+import { AstTree, BooleanLiteralNode, CallNode, NumberLiteralNode, StringLiteralNode } from "../parser/ast";
 import { Assmebly } from "./assembly";
 
 /**
@@ -149,9 +149,30 @@ export class Generator {
 		this.assembly.backLabel();
 		this.assembly.backSection();
 
-		// Here begins the actual program.
-		this.printText("Test Test Test Test Test Test Test");
-		this.printText("Dies ist offiziell ein Test von der Nasa. Bitte beachten sie alle Regeln.");
+		// Here begins the actual program.;
+		this.tree.children.forEach(child => {
+			if (child instanceof CallNode) {
+				switch (child.name) {
+					case "print":
+						this.printText(child.args.map(a => {
+							if (a instanceof StringLiteralNode)
+								return a.value.substring(1, a.value.length - 1);
+							else if (a instanceof NumberLiteralNode)
+								return a.value.toString();
+							else if (a instanceof BooleanLiteralNode)
+								return a.value.toString();
+							else {
+								logger.error("Argument of print must be a string.");
+								exit();
+							}
+						}).join(" "));
+						break;
+
+					default:
+						logger.error("Unknown function '" + child.name + "'.");
+				}
+			}
+		});
 
 		// Leaving the program.
 		this.exit();
