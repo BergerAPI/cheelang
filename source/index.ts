@@ -4,7 +4,6 @@ import winston from "winston";
 import fs from "fs";
 import { Lexer } from "./lexer";
 import { Parser } from "./parser/parser";
-import { Generator } from "./generator/generator";
 import { exec } from "child_process";
 import os from "os";
 
@@ -101,53 +100,10 @@ if (files.length > 0) {
 	const parser: Parser = new Parser(lexer);
 
 	if (options.debug.value) logger.debug("Parser started.");
-	if (options.debug.value) logger.debug("Starting Generator.");
-
-	const generator: Generator = new Generator(parser.parse());
-
-	if (options.debug.value) logger.debug("Generator started.");
-	if (options.debug.value) logger.debug("Generating code.");
-
-	generator.generate("build/out.asm");
-
-	if (options.debug.value) logger.debug("Code generated.");
-	if (options.debug.value) logger.debug("Compiling ASM and Linking.");
-
-	logger.info("Started compiling the ASM-Code with NASM.");
 
 	// Creating the directory where we put all 
 	// the generated object files into
 	fs.mkdirSync("build/obj", { recursive: true });
-
-	// NASM
-	exec("nasm -fmacho64 build/out.asm -o build/obj/out.o", (error, _stdout, stderr) => {
-		if (error) {
-			console.log(error.message);
-			return;
-		}
-		if (stderr) {
-			console.log(stderr);
-			return;
-		}
-	});
-
-	logger.info("Started linking the ASM-Code with ld.");
-
-	// ld
-	exec("ld -e _main -macosx_version_min 10.13 \
-		-L /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib -lSystem \
-		-arch x86_64 -o build/executable build/obj/out.o -no_pie", (error, _stdout, stderr) => {
-
-		if (error) {
-			console.log(error.message);
-			return;
-		}
-		if (stderr) {
-			console.log(stderr);
-			return;
-		}
-	});
-
 } else {
 	logger.error("You need to provide files to compile.");
 	exit(1);
