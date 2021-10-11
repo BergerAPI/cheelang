@@ -6,6 +6,8 @@ import { Lexer } from "./lexer";
 import { Parser } from "./parser/parser";
 import { exec } from "child_process";
 import os from "os";
+import { AstTree } from "./parser/ast";
+import { Generator } from "./generator/generator";
 
 // Basic logger
 export const logger = winston.createLogger({
@@ -97,9 +99,14 @@ if (files.length > 0) {
 	if (options.debug.value) logger.debug("Lexer initialised.");
 	if (options.debug.value) logger.debug("Starting Parser.");
 
-	const parser: Parser = new Parser(lexer);
+	const tree: AstTree = (new Parser(lexer)).parse();
 
 	if (options.debug.value) logger.debug("Parser started.");
+	if (options.debug.value) logger.debug("Generator starting.");
+
+	const generator = new Generator(tree);
+
+	console.log(generator.generate());
 
 	// Creating the directory where we put all 
 	// the generated object files into
