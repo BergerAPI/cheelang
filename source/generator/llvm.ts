@@ -199,14 +199,19 @@ export class LLVMReturn implements LLVMPart {
 export class LLVM {
 
 	/**
-	 * All parts in order.
-	 */
-	private parts: LLVMPart[] = [];
-
-	/**
 	 * The current function.
 	 */
 	private currentFunction: unknown = null;
+
+	/**
+	 * All globals.
+	 */
+	globals: LLVMGlobalVariableDeclaration[] = [];
+
+	/**
+	 * All function declarations.
+	 */
+	declarations: LLVMFunctionDelcaration[] = [];
 
 	/**
 	 * All functions that we could theoretically call.
@@ -220,7 +225,6 @@ export class LLVM {
 		const newFunction = new LLVMFunction(name, type, parameters, block);
 
 		this.validFunctions.push(newFunction);
-		this.parts.push(newFunction);
 		this.currentFunction = newFunction;
 	}
 
@@ -228,8 +232,7 @@ export class LLVM {
 	 * Declaring a new function without a block.
 	 */
 	declareFunction(name: string, returnType: LLVMType, parameters: LLVMType[]): void {
-		this.parts.push(new LLVMFunctionDelcaration(name, returnType, parameters));
-		this.validFunctions.push(new LLVMFunction(name, returnType, [], []));
+		this.declarations.push(new LLVMFunctionDelcaration(name, returnType, parameters));
 	}
 
 	/**
@@ -239,7 +242,7 @@ export class LLVM {
 	 * @param value The value of this variable
 	 */
 	globalVariable(name: string, type: LLVMType, value: string): void {
-		this.parts.unshift(new LLVMGlobalVariableDeclaration(type, name, value));
+		this.globals.push(new LLVMGlobalVariableDeclaration(type, name, value));
 	}
 
 	/**
@@ -284,12 +287,7 @@ export class LLVM {
 	 * @param functionName the name of the function we want.
 	 */
 	setFunction(functionName: string): void {
-		this.currentFunction = this.parts.find(p => {
-			if (p instanceof LLVMFunction)
-				return p.name === functionName;
-
-			return false;
-		}) as LLVMFunction;
+		this.currentFunction = this.validFunctions.find(p => p.name === functionName);
 
 		if (this.currentFunction === undefined)
 			throw new Error(`Function ${functionName} does not exist.`);
@@ -299,13 +297,15 @@ export class LLVM {
 	 * Generating a random temp variable name.
 	 */
 	getRandomName(): string {
-		return `tmp${this.parts.length}`;
+		return `tmp${this.globals.length + this.validFunctions.length}`;
 	}
 
 	/**
 	 * Returning the code.
 	 */
 	toString(): string {
-		return this.parts.map(p => p.toString()).join("\n\n");
+		return this.globals.map(p => p.toString()).join("\n") + "\n\n"
+			+ this.declarations.map(p => p.toString()).join("\n") + "\n\n"
+			+ this.validFunctions.map(p => p.toString()).join("\n") + "\n\n";
 	}
 }

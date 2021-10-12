@@ -114,7 +114,7 @@ if (files.length > 0) {
 	fs.writeFileSync("build/obj/op.ll", generator.generate());
 
 	// Compiling the llvm code
-	exec(`${os.platform() === "linux" ? "clang" : "clang++"} -o build/a.out -S build/obj/op.ll`, (error, stdout, stderr) => {
+	exec(`${os.platform() === "linux" ? "clang" : "clang++"} -o build/a.out build/obj/op.ll`, (error, stdout, stderr) => {
 		if (error) {
 			logger.error(`Could not compile the code: ${error}`);
 			exit();

@@ -41,7 +41,7 @@ export class Generator {
 		switch (node.type) {
 			case "CallNode": {
 				const child = node as CallNode;
-				const validFunction = this.llvm.validFunctions.find(f => f.name === child.name);
+				const validFunction = this.llvm.validFunctions.find(f => f.name === child.name) ?? this.llvm.declarations.find(f => f.name === child.name);
 
 				if (!validFunction)
 					throw new Error("Unknown function: " + child.name);
@@ -59,20 +59,12 @@ export class Generator {
 		// Default function
 		this.llvm.declareFunction("printf", IntegerType.get("32"), [IntegerType.get("8", true)]);
 
-		this.llvm.defineFunction("test", IntegerType.get("32"));
-
-		this.llvm.functionCall("printf", [StringType.get("ad World!\n", this.llvm)], IntegerType.get("32"));
-
-		this.llvm.functionReturn("0");
-
-		this.llvm.defineFunction("main", IntegerType.get("32"));
+		/* TODO: Replace this code with a function definition the code */ this.llvm.defineFunction("main", IntegerType.get("32"));
 
 		// Generate code
-		this.tree.children.forEach(child => {
-			this.generateExpression(child);
-		});
+		this.tree.children.forEach(child => this.generateExpression(child));
 
-		this.llvm.functionReturn("0");
+		/* TODO: Replace this code with a function definition the code */ this.llvm.functionReturn("0");
 
 		return this.llvm.toString();
 	}
