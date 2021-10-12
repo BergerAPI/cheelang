@@ -57,9 +57,9 @@ export class Generator {
 	generate(): string {
 
 		// Default function
-		this.llvm.declareFunction("printf", IntegerType.get("32"), [IntegerType.get("8", true)]);
+		this.llvm.declareFunction("printf", IntegerType.get(32), [IntegerType.get(8, true)]);
 
-		/* TODO: Replace this code with a function definition the code */ this.llvm.defineFunction("main", IntegerType.get("32"));
+		/* TODO: Replace this code with a function definition the code */ this.llvm.defineFunction("main", IntegerType.get(32));
 
 		// Generate code
 		this.tree.children.forEach(child => this.generateExpression(child));

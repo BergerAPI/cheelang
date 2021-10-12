@@ -27,14 +27,14 @@ export interface LLVMType extends LLVMPart {
 export class IntegerType implements LLVMType {
 	type = "IntegerType";
 
-	private constructor(public width: string, public pointer: boolean = false) { }
+	private constructor(public width: number, public pointer: boolean = false) { }
 
 	/**
 	 * Creating a new Integer Type.
 	 * @param width the bit width of this integer.
 	 * @returns {IntegerType}
 	 */
-	static get(width: string, pointer = false): IntegerType {
+	static get(width: number, pointer = false): IntegerType {
 		return new IntegerType(width, pointer);
 	}
 
