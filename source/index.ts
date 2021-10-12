@@ -106,11 +106,23 @@ if (files.length > 0) {
 
 	const generator = new Generator(tree);
 
-	console.log(generator.generate());
-
 	// Creating the directory where we put all 
 	// the generated object files into
 	fs.mkdirSync("build/obj", { recursive: true });
+
+	// The llvm code
+	fs.writeFileSync("build/obj/op.ll", generator.generate());
+
+	// Compiling the llvm code
+	exec(`${os.platform() === "linux" ? "clang" : "clang++"} -o build/a.out build/obj/op.ll`, (error, stdout, stderr) => {
+		if (error) {
+			logger.error(`Could not compile the code: ${error}`);
+			exit();
+		}
+
+		if (stderr)
+			console.log(`${stderr}`);
+	});
 } else {
 	logger.error("You need to provide files to compile.");
 	exit(1);

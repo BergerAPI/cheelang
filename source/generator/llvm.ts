@@ -88,9 +88,9 @@ export class StringType implements LLVMType {
 	 */
 	static get(value: string, context: LLVM): StringType {
 		const name = context.getRandomName();
-		const valueLenght = value.length + 1;
+		const valueLenght = value.length + 2;
 
-		context.globalVariable(`.str-${name}`, VoidType.get(), `private unnamed_addr constant [${valueLenght} x i8] c"${value}\\0A"`);
+		context.globalVariable(`.str-${name}`, VoidType.get(), `private unnamed_addr constant [${valueLenght} x i8] c"${value}\\0A\\00"`);
 		context.defineLocalVariable(name, VoidType.get(), `getelementptr [${valueLenght} x i8], [${valueLenght} x i8]* @.str-${name}, i64 0, i64 0`);
 
 		return new StringType(value, context, name);
