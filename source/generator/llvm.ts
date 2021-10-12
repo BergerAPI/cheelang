@@ -209,11 +209,17 @@ export class LLVM {
 	private currentFunction: unknown = null;
 
 	/**
+	 * All functions that we could theoretically call.
+	 */
+	validFunctions: LLVMFunction[] = [];
+
+	/**
 	 * Adding a new function.
 	 */
 	defineFunction(name: string, type: LLVMType = VoidType.get(), block: LLVMPart[] = [], parameters: LLVMFunctionParameter[] = []): void {
 		const newFunction = new LLVMFunction(name, type, parameters, block);
 
+		this.validFunctions.push(newFunction);
 		this.parts.push(newFunction);
 		this.currentFunction = newFunction;
 	}
@@ -223,6 +229,7 @@ export class LLVM {
 	 */
 	declareFunction(name: string, returnType: LLVMType, parameters: LLVMType[]): void {
 		this.parts.push(new LLVMFunctionDelcaration(name, returnType, parameters));
+		this.validFunctions.push(new LLVMFunction(name, returnType, [], []));
 	}
 
 	/**
