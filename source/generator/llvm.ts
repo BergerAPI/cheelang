@@ -77,7 +77,7 @@ export class StringType implements LLVMType {
 	 * @returns {string}
 	 */
 	toString(): string {
-		return `i8* %${this.stringConstant}`;
+		return this.stringConstant;
 	}
 
 	/**
@@ -86,12 +86,17 @@ export class StringType implements LLVMType {
 	 * @param context we need the llvm context here to define some constants.
 	 * @returns {StringType}
 	 */
-	static get(value: string, context: LLVM): StringType {
-		const name = context.getRandomName();
+	static get(value: string, context: LLVM, newVariable = true): StringType {
 		const valueLenght = value.length + 2;
+		let name = context.getRandomName();
 
 		context.globalVariable(`.str-${name}`, VoidType.get(), `private unnamed_addr constant [${valueLenght} x i8] c"${value}\\0A\\00"`);
-		context.defineLocalVariable(name, VoidType.get(), `getelementptr [${valueLenght} x i8], [${valueLenght} x i8]* @.str-${name}, i64 0, i64 0`);
+
+		if (newVariable) {
+			context.defineLocalVariable(name, `getelementptr [${valueLenght} x i8], [${valueLenght} x i8]* @.str-${name}, i64 0, i64 0`);
+
+			name = "%" + name;
+		} else name = `getelementptr [${valueLenght} x i8], [${valueLenght} x i8]* @.str-${name}, i64 0, i64 0`;
 
 		return new StringType(value, context, name);
 	}
@@ -140,7 +145,7 @@ export class LLVMFunctionDelcaration implements LLVMPart {
 }
 
 export class LLVMVariableDeclaration implements LLVMPart {
-	constructor(public type: LLVMType, public name: string, public value: string) { }
+	constructor(public name: string, public value: string) { }
 
 	/**
 	 * @see {LLVMPart.toString}
@@ -167,14 +172,17 @@ export class LLVMGlobalVariableDeclaration implements LLVMPart {
  * A basic LLVM function call
  */
 export class LLVMFunctionCall implements LLVMPart {
-	constructor(public name: string, public parameters: LLVMPart[], public functionType: LLVMType) { }
+	constructor(public name: string, public parameters: LLVMPart[], public func: LLVMFunction | LLVMFunctionDelcaration) { }
 
 	/**
 	 * @see {LLVMPart.toString}
 	 * @returns {string}
 	 */
 	toString(): string {
-		return `call ${this.functionType.toString()} @${this.name}(${this.parameters.map(p => p.toString()).join(", ")})`;
+		if (this.func instanceof LLVMFunction)
+			return `call ${this.func.returnType.toString()} @${this.name}(${this.parameters.map(p => p.toString()).join(", ")})`;
+
+		return `call ${this.func.returnType.toString()} @${this.name}(${this.parameters.map((p, index) => this.func.parameters[index].toString() + p.toString()).join(", ")})`;
 	}
 }
 
@@ -251,11 +259,11 @@ export class LLVM {
 	 * @param type The type of the variable.
 	 * @todo convert value to an interface.
 	 */
-	defineLocalVariable(name: string, type: LLVMType, value: string): void {
+	defineLocalVariable(name: string, value: string): void {
 		if (this.currentFunction === null || !(this.currentFunction instanceof LLVMFunction))
 			throw new Error("Cannot define a local variable outside of a function.");
 
-		this.currentFunction.block.push(new LLVMVariableDeclaration(type, name, value));
+		this.currentFunction.block.push(new LLVMVariableDeclaration(name, value));
 	}
 
 	/**
@@ -263,11 +271,11 @@ export class LLVM {
 	 * @param name The name of the function we want to call.
 	 * @param parameters The parameters of the function we want to call.
 	 */
-	functionCall(name: string, parameters: LLVMPart[], returnType: LLVMType): void {
+	functionCall(name: string, parameters: LLVMPart[], func: LLVMFunction | LLVMFunctionDelcaration): void {
 		if (this.currentFunction === null || !(this.currentFunction instanceof LLVMFunction))
 			throw new Error("Cannot call a function outside of a function.");
 
-		this.currentFunction.block.push(new LLVMFunctionCall(name, parameters, returnType));
+		this.currentFunction.block.push(new LLVMFunctionCall(name, parameters, func));
 	}
 
 	/**

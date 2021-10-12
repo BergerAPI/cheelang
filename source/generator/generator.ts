@@ -1,4 +1,4 @@
-import { AstNode, AstTree, CallNode, StringLiteralNode } from "../parser/ast";
+import { AstNode, AstTree, CallNode, SetVariableNode, StringLiteralNode } from "../parser/ast";
 import { IntegerType, LLVM, LLVMType, StringType } from "./llvm";
 
 /**
@@ -16,14 +16,14 @@ export class Generator {
 	/**
 	 * Generate a type.
 	 */
-	generateType(node: AstNode): LLVMType {
+	generateType(node: AstNode, allowNewVariable = true): LLVMType {
 		let result = undefined;
 
 		switch (node.type) {
 			case "StringLiteralNode": {
 				const child = node as StringLiteralNode;
 
-				result = StringType.get(child.value.substring(1, child.value.length - 1), this.llvm);
+				result = StringType.get(child.value.substring(1, child.value.length - 1), this.llvm, allowNewVariable);
 			}
 		}
 
@@ -46,8 +46,14 @@ export class Generator {
 				if (!validFunction)
 					throw new Error("Unknown function: " + child.name);
 
-				this.llvm.functionCall(child.name, child.args.map(arg => this.generateType(arg)), validFunction.returnType);
-			}
+				this.llvm.functionCall(child.name, child.args.map(arg => this.generateType(arg)), validFunction);
+			} break;
+			case "SetVariableNode": {
+				const child = node as SetVariableNode;
+				const type = this.generateType(child.value, false);
+
+				this.llvm.defineLocalVariable(child.name, type.toString());
+			} break;
 		}
 	}
 

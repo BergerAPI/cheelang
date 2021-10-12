@@ -3,7 +3,7 @@ import { exit } from "process";
 import fs from "fs";
 import { logger, options } from "..";
 import { Lexer, Token } from "../lexer";
-import { AstNode, AstTree, BooleanLiteralNode, CallNode, ExpressionNode, NumberLiteralNode, StringLiteralNode, UnaryNode, VariableNode } from "./ast";
+import { AstNode, AstTree, BooleanLiteralNode, CallNode, ExpressionNode, NumberLiteralNode, SetVariableNode, StringLiteralNode, UnaryNode, VariableNode } from "./ast";
 
 /**
  * Syntax checking and preparing the Abstract Syntax Tree (AST) for the
@@ -116,6 +116,13 @@ export class Parser {
 			this.expect("RIGHT_PARENTHESIS");
 
 			return new CallNode(token.raw, args);
+		}
+
+		// Probably a variable definition
+		if (this.token.type === "EQUALS") {
+			this.expect("EQUALS");
+
+			return new SetVariableNode(token.raw, this.expression(false));
 		}
 
 		// If its not a function, it must be a variable reference.
