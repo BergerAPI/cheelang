@@ -1,5 +1,7 @@
-import { AstNode, AstTree, CallNode, SetVariableNode, StringLiteralNode, VariableNode } from "../parser/ast";
-import { IntegerType, LLVM, LLVMType, StringType, VariableReferenceType } from "./llvm";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { AstTree } from "../parser/ast";
+import { FunctionParameter, LLVMType, VariableAttributes } from "./instructions";
+import { LLVM } from "./llvm";
 
 /**
  * Thats the part where we compile to llvm code.
@@ -14,69 +16,20 @@ export class Generator {
 	constructor(public tree: AstTree) { }
 
 	/**
-	 * Generate a type.
-	 */
-	generateType(node: AstNode, allowNewVariable = true): LLVMType {
-		let result = undefined;
-
-		switch (node.type) {
-			case "StringLiteralNode": {
-				const child = node as StringLiteralNode;
-
-				result = StringType.get(child.value.substring(1, child.value.length - 1), this.llvm, allowNewVariable);
-			} break;
-
-			case "VariableNode": {
-				const child = node as VariableNode;
-
-				result = VariableReferenceType.get(child.name);
-			} break;
-		}
-
-		if (!result)
-			throw new Error("Unknown type: " + node.type);
-
-		return result;
-	}
-
-	/**
-	 * Converting a node.
-	 * @param node the node we want to convert.
-	 */
-	generateExpression(node: AstNode): void {
-		switch (node.type) {
-			case "CallNode": {
-				const child = node as CallNode;
-				const validFunction = this.llvm.validFunctions.find(f => f.name === child.name) ?? this.llvm.declarations.find(f => f.name === child.name);
-
-				if (!validFunction)
-					throw new Error("Unknown function: " + child.name);
-
-				this.llvm.functionCall(child.name, child.args.map(arg => this.generateType(arg)), validFunction);
-			} break;
-			case "SetVariableNode": {
-				const child = node as SetVariableNode;
-				const type = this.generateType(child.value, false);
-
-				this.llvm.defineLocalVariable(child.name, type.toString());
-			} break;
-		}
-	}
-
-	/**
 	 * Here we put all parts into a string.
 	 */
 	generate(): string {
 
-		// Default function
-		this.llvm.declareFunction("printf", IntegerType.get(32), [IntegerType.get(8, true)]);
+		// First we generate the global variables
+		this.llvm.global(".str", LLVMType.array(LLVMType.integer(8), 6), "c\"Naruto\"", [VariableAttributes.CONSTANT]);
 
-		/* TODO: Replace this code with a function definition the code */ this.llvm.defineFunction("main", IntegerType.get(32));
+		this.llvm.declareFunction("printf", LLVMType.integer(32), [new FunctionParameter(LLVMType.integer(8))]);
+		this.llvm.defineFunction("main", LLVMType.integer(32));
+
+		this.llvm.return("0");
 
 		// Generate code
-		this.tree.children.forEach(child => this.generateExpression(child));
-
-		/* TODO: Replace this code with a function definition the code */ this.llvm.functionReturn("0");
+		//this.tree.children.forEach(child => this.generateExpression(child));
 
 		return this.llvm.toString();
 	}

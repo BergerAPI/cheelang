@@ -159,7 +159,7 @@ export class Parser {
 			return new ExpressionNode(expr, this.expression(false), operator);
 		}
 
-		if ((alone && !this.token) || (alone && this.token.raw != "."))
+		if (((alone && !this.token) || (alone && this.token.raw != ".")) && (expr instanceof ExpressionNode || expr instanceof NumberLiteralNode || expr instanceof StringLiteralNode || expr instanceof BooleanLiteralNode))
 			logger.warn("Expression stands alone without a statement. Line: " + (this.token ? this.token.line.toString() : this.lexer.line.toString()));
 
 		return expr;

@@ -47,7 +47,7 @@ export class StringLiteralNode implements AstNode {
  * A basic number. (e.g. 1 or 1.1)
  */
 export class NumberLiteralNode implements AstNode {
-	type = "IntegerLiteralNode";
+	type = "NumberLiteralNode";
 
 	constructor(public value: number) {
 	}
