@@ -102,6 +102,30 @@ export class StringType implements LLVMType {
 	}
 }
 
+export class VariableReferenceType implements LLVMType {
+	type = "VariableReferenceType";
+
+	private constructor(public name: string) { }
+
+	/**
+	 * @see {LLVMPart.toString}
+	 * @returns {string}
+	 */
+	toString(): string {
+		return "%" + this.name;
+	}
+
+	/**
+	 * Creating a new VariableReference Type.
+	 * @param name the value of this variable.
+	 * @returns {StringType}
+	 */
+	static get(name: string): VariableReferenceType {
+		return new VariableReferenceType(name);
+	}
+}
+
+
 export class LLVMFunctionParameter implements LLVMPart {
 	constructor(public type: LLVMPart, public name: string) { }
 

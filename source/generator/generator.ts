@@ -1,5 +1,5 @@
-import { AstNode, AstTree, CallNode, SetVariableNode, StringLiteralNode } from "../parser/ast";
-import { IntegerType, LLVM, LLVMType, StringType } from "./llvm";
+import { AstNode, AstTree, CallNode, SetVariableNode, StringLiteralNode, VariableNode } from "../parser/ast";
+import { IntegerType, LLVM, LLVMType, StringType, VariableReferenceType } from "./llvm";
 
 /**
  * Thats the part where we compile to llvm code.
@@ -24,7 +24,13 @@ export class Generator {
 				const child = node as StringLiteralNode;
 
 				result = StringType.get(child.value.substring(1, child.value.length - 1), this.llvm, allowNewVariable);
-			}
+			} break;
+
+			case "VariableNode": {
+				const child = node as VariableNode;
+
+				result = VariableReferenceType.get(child.name);
+			} break;
 		}
 
 		if (!result)

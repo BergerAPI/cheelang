@@ -1,0 +1,9 @@
+test = "Naruto!"
+tturna = "Chee!"
+
+printf(test)
+printf(tturna)
+
+printf("--------------")
+
+printf("OMG! Real Chee!")
