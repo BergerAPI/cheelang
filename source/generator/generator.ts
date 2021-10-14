@@ -16,17 +16,25 @@ export class Generator {
 	constructor(public tree: AstTree) { }
 
 	/**
+	 * Generating a constant for the char array (the string)
+	 * @param value the value of the string
+	 */
+	constantString(value: string, name = ""): string {
+		const nName = name == "" ? (".str" + this.llvm.currentFunction?.scope.length) : name;
+
+		this.llvm.global(nName, LLVMType.array(LLVMType.integer(8), value.length), `c"${value}"`, [VariableAttributes.PRIVATE, VariableAttributes.UNNAMED_ADDRESS, VariableAttributes.CONSTANT]);
+
+		return nName;
+	}
+
+	/**
 	 * Here we put all parts into a string.
 	 */
 	generate(): string {
-
-		// First we generate the global variables
-		this.llvm.global(".str", LLVMType.array(LLVMType.integer(8), 6), "c\"Naruto\"", [VariableAttributes.CONSTANT]);
-
 		this.llvm.declareFunction("printf", LLVMType.integer(32), [new FunctionParameter(LLVMType.integer(8))]);
-		this.llvm.defineFunction("main", LLVMType.integer(32));
+		this.llvm.defineFunction("main", LLVMType.void());
 
-		this.llvm.return("0");
+		this.llvm.return();
 
 		// Generate code
 		//this.tree.children.forEach(child => this.generateExpression(child));

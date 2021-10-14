@@ -1,3 +1,5 @@
+import { Generator } from "./generator";
+
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface Instruction {
 	/**
@@ -19,12 +21,21 @@ export class LLVMType {
 	}
 
 	/**
+	 * A basic string.
+	 */
+	static string(value: string, context: Generator): LLVMType {
+		const name = context.constantString(value);
+
+		return new LLVMType(`getelementptr inbounds ([${value.length + 2} x i8], [${value.length + 2} x i8]* ${name}, i32 0, i32 0)`);
+	}
+
+	/**
 	 * An Integer.
 	 * @param width The width of an integer.
 	 * @returns this
 	 */
-	static integer(width: number): LLVMType {
-		return new LLVMType(`i${width}`);
+	static integer(width: number, pointer = false): LLVMType {
+		return new LLVMType(`i${width}${pointer ? "*" : ""}`);
 	}
 
 	/**

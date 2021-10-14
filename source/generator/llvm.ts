@@ -8,7 +8,7 @@ export class LLVM {
 	/**
 	 * The current function.
 	 */
-	private currentFunction: DefineInstruction | undefined = undefined;
+	currentFunction: DefineInstruction | undefined = undefined;
 
 	/**
 	 * All globals.
@@ -37,14 +37,16 @@ export class LLVM {
 	 * Returning from a function.
 	 * @param value the value to return.
 	 */
-	return(value: string): void {
+	return(value = ""): void {
 		if (!this.currentFunction)
 			throw new Error("Can't return outside a function.");
 
 		this.currentFunction.scope.push(new ReturnInstruction(value, this.currentFunction));
 	}
 
-
+	/**
+	 * Defining a global variable
+	 */
 	global(name: string, type: LLVMType, value: string, attributes: VariableAttributes[] = []): void {
 		this.globals.push(new GlobalInstruction(name, type, value, attributes));
 	}
