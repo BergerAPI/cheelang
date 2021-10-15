@@ -141,33 +141,6 @@ export class Parser {
 	}
 
 	/**
-	 * Checking if both values are the same type.
-	 */
-	private checkExpression(expression: ExpressionNode): boolean {
-		if (expression.left instanceof ExpressionNode)
-			if (!this.checkExpression(expression.left as ExpressionNode))
-				return false;
-
-		if (expression.right instanceof ExpressionNode)
-			if (!this.checkExpression(expression.right as ExpressionNode))
-				return false;
-
-		if (expression.left instanceof IntegerLiteralNode && !(expression.right instanceof IntegerLiteralNode))
-			return false;
-
-		if (expression.left instanceof FloatLiteralNode && !(expression.right instanceof FloatLiteralNode))
-			return false;
-
-		if (expression.left instanceof StringLiteralNode && !(expression.right instanceof StringLiteralNode))
-			return false;
-
-		if (expression.left instanceof BooleanLiteralNode && !(expression.right instanceof BooleanLiteralNode))
-			return false;
-
-		return true;
-	}
-
-	/**
 	 * Parsing an expression.
 	 */
 	private expression(alone: boolean): AstNode {
@@ -195,12 +168,6 @@ export class Parser {
 			this.expect("RELATIONAL_OPERATOR");
 
 			return new ExpressionNode(expr, this.expression(false), operator);
-		}
-
-		// Checking if both values are the same
-		if (expr instanceof ExpressionNode) {
-			if (!this.checkExpression(expr))
-				logger.error(`Both values must be the same type.`);
 		}
 
 		if (((alone && !this.token) || (alone && this.token.raw != ".")) && (expr instanceof ExpressionNode || expr instanceof IntegerLiteralNode || expr instanceof FloatLiteralNode || expr instanceof StringLiteralNode || expr instanceof BooleanLiteralNode))

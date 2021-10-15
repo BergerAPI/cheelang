@@ -9,7 +9,7 @@ export class TokenType {
 	static INTEGER_LITERAL = /^([0-9]+)/;
 	static BOOLEAN_LITERAL = /^(true|false)/
 	static COMMA = /^(,)/;
-	static COMMENT = /^(\/\/)/;
+	static COMMENT = /^(;)/;
 	static DOT = /^(\.)/;
 	static ARITHMETIC_OPERATOR = /^([+-/*])/;
 	static RELATIONAL_OPERATOR = /^(&&|\|\||<=|>=|<|>|==|!=)/;

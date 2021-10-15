@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { AstNode, AstTree, CallNode, IntegerLiteralNode, SetVariableNode, StringLiteralNode, VariableNode } from "../parser/ast";
+import { AstNode, AstTree, CallNode, ExpressionNode, IntegerLiteralNode, SetVariableNode, StringLiteralNode, VariableNode } from "../parser/ast";
 import * as llvm from "llvm-node";
 
 /**
@@ -53,6 +53,21 @@ export class Generator {
 					throw new Error(`Variable ${node.name} doesn't exist.`);
 
 				return builder.createLoad(variable.value);
+			}
+			case "ExpressionNode": {
+				const node = child as ExpressionNode;
+
+				if (["+", "-", "*", "/"].includes(node.operator)) {
+					const left = this.generateType(node.left, builder);
+					const right = this.generateType(node.right, builder);
+
+					switch (node.operator) {
+						case "+": return builder.createAdd(left, right, "addtmp");
+						case "-": return builder.createSub(left, right, "subtmp");
+						case "*": return builder.createMul(left, right, "multmp");
+						case "/": return builder.createSDiv(left, right, "divtmp");
+					}
+				} else throw new Error(`Operator ${node.operator} doesn't exist.`);
 			}
 		}
 
