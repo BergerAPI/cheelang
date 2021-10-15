@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { AstTree } from "../parser/ast";
+import { AstNode, AstTree, CallNode, StringLiteralNode } from "../parser/ast";
 import * as llvm from "llvm-node";
 
 /**
@@ -16,6 +16,45 @@ export class Generator {
 	constructor(public tree: AstTree) { }
 
 	/**
+	 * Generating an llvm type.
+	 * 
+	 * @param child The node from the AST
+	 */
+	generateType(child: AstNode, builder: llvm.IRBuilder): llvm.Value {
+		switch (child.type) {
+			case "StringLiteralNode": {
+				const node = child as StringLiteralNode;
+
+				return builder.createGlobalStringPtr(node.value.substring(1, node.value.length - 1));
+			}
+		}
+
+		throw new Error(`Unknown Type. (${child.type})`);
+	}
+
+	/**
+	 * Generating an expression.
+	 * 
+	 * @param child The node from the AST
+	 */
+	generateExpression(child: AstNode, builder: llvm.IRBuilder): void {
+		switch (child.type) {
+			case "CallNode": {
+				const node = child as CallNode;
+				const callee = this.module.getFunction(node.name);
+
+				if (!callee)
+					throw new Error(`Function ${node.name} doesn't exist.`);
+
+				const args = node.args.map(p => this.generateType(p, builder));
+
+				builder.createCall(callee, args);
+
+			} break;
+		}
+	}
+
+	/**
 	 * Here we put all parts into a string.
 	 */
 	generate(): string {
@@ -25,17 +64,11 @@ export class Generator {
 
 		// Generate the code
 		const main = this.module.getFunction("main");
-		const printf = this.module.getFunction("printf");
-
-		if (!printf || !printf)
-			throw new Error("Something went very wrong.");
 
 		const entry = llvm.BasicBlock.create(this.context, "entry", main);
 		const builder = new llvm.IRBuilder(entry);
 
-		const arrayPtr = builder.createGlobalStringPtr("Hello world", "test", 0);
-
-		builder.createCall(printf, [arrayPtr]);
+		this.tree.children.forEach(child => this.generateExpression(child, builder));
 
 		builder.createRet(llvm.ConstantInt.get(this.context, 0));
 
