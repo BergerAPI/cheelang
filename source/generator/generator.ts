@@ -133,13 +133,23 @@ export class Generator {
 				this.builder.createCondBr(condition, scopeBlock, elseBlock);
 				this.builder.setInsertionPoint(scopeBlock);
 
+				// Saving the scope
+				const currentScope = [...this.variables];
+
 				node.scope.forEach(p => this.generateExpression(p));
 
-				this.builder.createBr(endBlock);
+				// Restoring the scope
+				this.variables = currentScope;
 
+				this.builder.createBr(endBlock);
 				this.builder.setInsertionPoint(elseBlock);
-				this.builder.createBr(endBlock);
 
+				node.elseScope.forEach(p => this.generateExpression(p));
+
+				// Restoring the scope
+				this.variables = currentScope;
+
+				this.builder.createBr(endBlock);
 				this.builder.setInsertionPoint(endBlock);
 			} break;
 		}
@@ -151,6 +161,8 @@ export class Generator {
 	generate(): string {
 		// Default Print Function // TODO: Remove this
 		this.module.getOrInsertFunction("printf", llvm.FunctionType.get(llvm.Type.getInt32Ty(this.context), [llvm.Type.getInt8PtrTy(this.context)], true));
+		this.module.getOrInsertFunction("scanf", llvm.FunctionType.get(llvm.Type.getInt32Ty(this.context), [llvm.Type.getInt8PtrTy(this.context)], true));
+
 		this.module.getOrInsertFunction("main", llvm.FunctionType.get(llvm.Type.getInt32Ty(this.context), [], false));
 
 		// Generate the code

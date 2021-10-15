@@ -113,6 +113,6 @@ export class CallNode implements AstNode {
 export class IfNode implements AstNode {
 	type = "IfNode";
 
-	constructor(public condition: AstNode, public scope: AstNode[]) {
+	constructor(public condition: AstNode, public scope: AstNode[], public elseScope: AstNode[]) {
 	}
 }

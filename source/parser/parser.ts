@@ -179,8 +179,9 @@ export class Parser {
 	/**
 	 * We have an keyword.
 	 */
-	private keyword(): AstNode {
+	private keyword(): AstNode | undefined {
 		const tokenValue = this.token.raw;
+		const line = this.token.line;
 
 		this.expect("KEYWORD");
 
@@ -188,6 +189,7 @@ export class Parser {
 			case "if": {
 				const condition = this.expression(false);
 				const scope = [];
+				const elseScope = [];
 
 				this.expect("LEFT_BRACE");
 
@@ -196,7 +198,33 @@ export class Parser {
 
 				this.expect("RIGHT_BRACE");
 
-				return new IfNode(condition, scope);
+				if (this.token && this.token.type === "KEYWORD" && this.token.raw === "else") {
+					this.expect("KEYWORD");
+					this.expect("LEFT_BRACE");
+
+					while (this.token) {
+						const token = this.token;
+
+						// I have to do it like this because otherwise typescript complains that this
+						// will always return true
+						if (token.type === "RIGHT_BRACE")
+							break;
+
+						elseScope.push(this.decidePart());
+					}
+
+					this.expect("RIGHT_BRACE");
+				}
+
+				if (elseScope.length === 0)
+					logger.warn("Else scope without scope. Line: " + line.toString());
+
+				if (scope.length == 0) {
+					logger.warn("If statement without any scope. Line: " + line.toString());
+					return undefined;
+				}
+
+				return new IfNode(condition, scope, elseScope);
 			}
 		}
 
@@ -241,10 +269,6 @@ export class Parser {
 
 			if (node)
 				block.push(node);
-			else {
-				logger.error(`Unknown token ${this.token.raw}`);
-				exit(1);
-			}
 		}
 
 		const result = new AstTree("Program", block);

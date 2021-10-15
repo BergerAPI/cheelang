@@ -1,3 +1,9 @@
-if 1 + 1 == 2 {
-	printf("1 + 1 == 2")
+if 1 + 2 == 2 {
+	ne_mene = "ne_mene is here! :)"
+	printf(ne_mene)
+} else {
+	printf("No ne_mene :(")
 }
+
+; Uncommenting this would result in an error since "ne_mene" isn't in this scope.
+; printf(ne_mene)
