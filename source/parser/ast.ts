@@ -106,3 +106,13 @@ export class CallNode implements AstNode {
 	constructor(public name: string, public args: AstNode[]) {
 	}
 }
+
+/**
+ * If something is true, then do this, otherwise do that.
+ */
+export class IfNode implements AstNode {
+	type = "IfNode";
+
+	constructor(public condition: AstNode, public scope: AstNode[]) {
+	}
+}

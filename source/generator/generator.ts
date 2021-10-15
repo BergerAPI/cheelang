@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { AstNode, AstTree, CallNode, ExpressionNode, IntegerLiteralNode, SetVariableNode, StringLiteralNode, VariableNode } from "../parser/ast";
+import { AstNode, AstTree, CallNode, ExpressionNode, IfNode, IntegerLiteralNode, SetVariableNode, StringLiteralNode, VariableNode } from "../parser/ast";
 import * as llvm from "llvm-node";
 
 /**
@@ -22,9 +22,19 @@ export class Generator {
 	private module = new llvm.Module("cheelang", this.context);
 
 	/**
+	 * Current thingy.
+	 */
+	private builder!: llvm.IRBuilder;
+
+	/**
 	 * All variables in the current context.
 	 */
 	private variables: Variable[] = [];
+
+	/**
+	 * Current function.
+	 */
+	private currentFunction!: llvm.Function;
 
 	constructor(public tree: AstTree) { }
 
@@ -38,7 +48,7 @@ export class Generator {
 			case "StringLiteralNode": {
 				const node = child as StringLiteralNode;
 
-				return builder.createGlobalStringPtr(node.value.substring(1, node.value.length - 1));
+				return builder.createGlobalStringPtr(node.value.substring(1, node.value.length - 1).replaceAll("\\n", "\\0A"));
 			}
 			case "IntegerLiteralNode": {
 				const node = child as IntegerLiteralNode;
@@ -57,7 +67,7 @@ export class Generator {
 			case "ExpressionNode": {
 				const node = child as ExpressionNode;
 
-				if (["+", "-", "*", "/"].includes(node.operator)) {
+				if (["+", "-", "*", "/", ">", "<", "==", "!="].includes(node.operator)) {
 					const left = this.generateType(node.left, builder);
 					const right = this.generateType(node.right, builder);
 
@@ -66,6 +76,10 @@ export class Generator {
 						case "-": return builder.createSub(left, right, "subtmp");
 						case "*": return builder.createMul(left, right, "multmp");
 						case "/": return builder.createSDiv(left, right, "divtmp");
+						case ">": return builder.createICmpSGT(left, right, "gt");
+						case "<": return builder.createICmpSLT(left, right, "lt");
+						case "==": return builder.createICmpEQ(left, right, "eq");
+						case "!=": return builder.createICmpNE(left, right, "ne");
 					}
 				} else throw new Error(`Operator ${node.operator} doesn't exist.`);
 			}
@@ -79,7 +93,7 @@ export class Generator {
 	 * 
 	 * @param child The node from the AST
 	 */
-	generateExpression(child: AstNode, builder: llvm.IRBuilder): void {
+	generateExpression(child: AstNode): void {
 		switch (child.type) {
 			case "CallNode": {
 				const node = child as CallNode;
@@ -88,14 +102,14 @@ export class Generator {
 				if (!callee)
 					throw new Error(`Function ${node.name} doesn't exist.`);
 
-				const args = node.args.map(p => this.generateType(p, builder));
+				const args = node.args.map(p => this.generateType(p, this.builder));
 
-				builder.createCall(callee, args);
+				this.builder.createCall(callee, args);
 			} break;
 			case "SetVariableNode": {
 				const node = child as SetVariableNode;
-				const value = this.generateType(node.value, builder);
-				const pointer = builder.createAlloca(value.type, undefined, node.name);
+				const value = this.generateType(node.value, this.builder);
+				const pointer = this.builder.createAlloca(value.type, undefined, node.name);
 
 				const variable = this.variables.find(v => v.name === node.name);
 
@@ -105,8 +119,29 @@ export class Generator {
 				else
 					variable.value = pointer;
 
-				builder.createStore(value, pointer);
-			}
+				this.builder.createStore(value, pointer);
+			} break;
+			case "IfNode": {
+				const node = child as IfNode;
+
+				const condition = this.generateType(node.condition, this.builder);
+
+				const scopeBlock = llvm.BasicBlock.create(this.context, "if_scope", this.currentFunction);
+				const elseBlock = llvm.BasicBlock.create(this.context, "if_else", this.currentFunction);
+				const endBlock = llvm.BasicBlock.create(this.context, "end_scope", this.currentFunction);
+
+				this.builder.createCondBr(condition, scopeBlock, elseBlock);
+				this.builder.setInsertionPoint(scopeBlock);
+
+				node.scope.forEach(p => this.generateExpression(p));
+
+				this.builder.createBr(endBlock);
+
+				this.builder.setInsertionPoint(elseBlock);
+				this.builder.createBr(endBlock);
+
+				this.builder.setInsertionPoint(endBlock);
+			} break;
 		}
 	}
 
@@ -121,12 +156,16 @@ export class Generator {
 		// Generate the code
 		const main = this.module.getFunction("main");
 
+		if (!main)
+			throw new Error("Main function doesn't exist.");
+
 		const entry = llvm.BasicBlock.create(this.context, "entry", main);
-		const builder = new llvm.IRBuilder(entry);
+		this.builder = new llvm.IRBuilder(entry);
+		this.currentFunction = main;
 
-		this.tree.children.forEach(child => this.generateExpression(child, builder));
+		this.tree.children.forEach(child => this.generateExpression(child));
 
-		builder.createRet(llvm.ConstantInt.get(this.context, 0));
+		this.builder.createRet(llvm.ConstantInt.get(this.context, 0));
 
 		return this.module.print();
 	}

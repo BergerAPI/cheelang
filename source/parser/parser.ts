@@ -3,7 +3,7 @@ import { exit } from "process";
 import fs from "fs";
 import { logger, options } from "..";
 import { Lexer, Token } from "../lexer";
-import { AstNode, AstTree, BooleanLiteralNode, CallNode, ExpressionNode, FloatLiteralNode, IntegerLiteralNode, SetVariableNode, StringLiteralNode, UnaryNode, VariableNode } from "./ast";
+import { AstNode, AstTree, BooleanLiteralNode, CallNode, ExpressionNode, FloatLiteralNode, IfNode, IntegerLiteralNode, SetVariableNode, StringLiteralNode, UnaryNode, VariableNode } from "./ast";
 
 /**
  * Syntax checking and preparing the Abstract Syntax Tree (AST) for the
@@ -177,13 +177,44 @@ export class Parser {
 	}
 
 	/**
+	 * We have an keyword.
+	 */
+	private keyword(): AstNode {
+		const tokenValue = this.token.raw;
+
+		this.expect("KEYWORD");
+
+		switch (tokenValue) {
+			case "if": {
+				const condition = this.expression(false);
+				const scope = [];
+
+				this.expect("LEFT_BRACE");
+
+				while (this.token && this.token.type != "RIGHT_BRACE")
+					scope.push(this.decidePart());
+
+				this.expect("RIGHT_BRACE");
+
+				return new IfNode(condition, scope);
+			}
+		}
+
+		throw new Error("Unknown keyword: " + tokenValue);
+	}
+
+	/**
 	 * Parsing a statement.
 	 * @returns {AstNode}
 	 */
-	private decidePart() {
+	private decidePart(): AstNode {
 		let node = undefined;
 
 		switch (this.token.type) {
+			case "KEYWORD":
+				node = this.keyword();
+				break;
+
 			case "ARITHMETIC_OPERATOR":
 			case "FLOAT_LITERAL":
 			case "STRING_LITERAL":
