@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { AstNode, AstTree, CallNode, ExpressionNode, IfNode, IntegerLiteralNode, SetVariableNode, StringLiteralNode, VariableNode } from "../parser/ast";
+import { AstNode, AstTree, CallNode, ExpressionNode, IfNode, IntegerLiteralNode, SetVariableNode, StringLiteralNode, VariableNode, WhileNode } from "../parser/ast";
 import * as llvm from "llvm-node";
 
 /**
@@ -109,17 +109,16 @@ export class Generator {
 			case "SetVariableNode": {
 				const node = child as SetVariableNode;
 				const value = this.generateType(node.value, this.builder);
-				const pointer = this.builder.createAlloca(value.type, undefined, node.name);
 
 				const variable = this.variables.find(v => v.name === node.name);
 
 				// Store the value or overwrite it
-				if (!variable)
-					this.variables.push(new Variable(pointer.name, pointer, value.type));
-				else
-					variable.value = pointer;
+				if (!variable) {
+					const pointer = this.builder.createAlloca(value.type, undefined, node.name);
 
-				this.builder.createStore(value, pointer);
+					this.variables.push(new Variable(pointer.name, pointer, value.type));
+					this.builder.createStore(value, pointer);
+				} else this.builder.createStore(value, variable.value);
 			} break;
 			case "IfNode": {
 				const node = child as IfNode;
@@ -150,6 +149,31 @@ export class Generator {
 				this.variables = currentScope;
 
 				this.builder.createBr(endBlock);
+				this.builder.setInsertionPoint(endBlock);
+			} break;
+			case "WhileNode": {
+				const node = child as WhileNode;
+
+				const conditionBlock = llvm.BasicBlock.create(this.context, "while_condition", this.currentFunction);
+				const scopeBlock = llvm.BasicBlock.create(this.context, "while_scope", this.currentFunction);
+				const endBlock = llvm.BasicBlock.create(this.context, "end_scope", this.currentFunction);
+
+				this.builder.createBr(conditionBlock);
+
+				// Checking if the condition is true
+				this.builder.setInsertionPoint(conditionBlock);
+				this.builder.createCondBr(this.generateType(node.condition, this.builder), scopeBlock, endBlock);
+				this.builder.setInsertionPoint(scopeBlock);
+
+				// Saving the scope
+				const currentScope = [...this.variables];
+
+				node.scope.forEach(p => this.generateExpression(p));
+
+				// Restoring the scope
+				this.variables = currentScope;
+
+				this.builder.createBr(conditionBlock);
 				this.builder.setInsertionPoint(endBlock);
 			} break;
 		}

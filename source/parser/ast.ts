@@ -116,3 +116,13 @@ export class IfNode implements AstNode {
 	constructor(public condition: AstNode, public scope: AstNode[], public elseScope: AstNode[]) {
 	}
 }
+
+/**
+ * If something is true, then do this, otherwise do that.
+ */
+export class WhileNode implements AstNode {
+	type = "WhileNode";
+
+	constructor(public condition: AstNode, public scope: AstNode[]) {
+	}
+}
