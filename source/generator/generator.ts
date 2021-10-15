@@ -67,7 +67,7 @@ export class Generator {
 			case "ExpressionNode": {
 				const node = child as ExpressionNode;
 
-				if (["+", "-", "*", "/", ">", "<", "==", "!="].includes(node.operator)) {
+				if (["+", "-", "*", "/", ">", "<", "==", "!=", "<=", ">="].includes(node.operator)) {
 					const left = this.generateType(node.left, builder);
 					const right = this.generateType(node.right, builder);
 
@@ -80,6 +80,8 @@ export class Generator {
 						case "<": return builder.createICmpSLT(left, right, "lt");
 						case "==": return builder.createICmpEQ(left, right, "eq");
 						case "!=": return builder.createICmpNE(left, right, "ne");
+						case "=>": return builder.createICmpSGE(left, right, "ge");
+						case "<=": return builder.createICmpSLE(left, right, "le");
 					}
 				} else throw new Error(`Operator ${node.operator} doesn't exist.`);
 			}

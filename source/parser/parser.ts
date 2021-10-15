@@ -153,16 +153,16 @@ export class Parser {
 		let expr = this.term();
 
 		// Lowest pritority
-		while (this.token != undefined && ["+", "-", ">", "<", "<=", ">=", "==", "!="].includes(this.token.raw)) {
+		while (this.token != undefined && ["+", "-"].includes(this.token.raw)) {
 			const operator = this.token.raw;
 
-			this.expect(this.token.type);
+			this.expect("ARITHMETIC_OPERATOR");
 
 			expr = new ExpressionNode(expr, this.term(), operator);
 		}
 
 		// Highest priority
-		if (this.token && ["&&", "||"].includes(this.token.raw)) {
+		if (this.token && ["&&", "||", ">", "<", "<=", ">=", "==", "!="].includes(this.token.raw)) {
 			const operator = this.token.raw;
 
 			this.expect("RELATIONAL_OPERATOR");

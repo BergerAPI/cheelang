@@ -1,11 +1,11 @@
 n = 0
 
-while n < 100 {
-	if n == 99 {
+while n <= 100 {
+	if n == 100 {
 		printf("%i", n)
 	} else {
 		printf("%i-", n)
 	}
-	
+
 	n = n + 1
 }
