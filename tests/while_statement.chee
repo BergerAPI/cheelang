@@ -1,6 +1,6 @@
 n = 0
 
-while n <= 100 {
+while n <= 50 || n <= 100 {
 	if n == 100 {
 		printf("%i", n)
 	} else {
