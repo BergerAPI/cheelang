@@ -1,6 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { AstNode, AstTree, CallNode, StringLiteralNode } from "../parser/ast";
+import { AstNode, AstTree, CallNode, IntegerLiteralNode, SetVariableNode, StringLiteralNode, VariableNode } from "../parser/ast";
 import * as llvm from "llvm-node";
+
+/**
+ * A simple variable.
+ */
+export class Variable {
+	constructor(public name: string, public value: llvm.Value, public type: llvm.Type) {
+	}
+}
 
 /**
  * Thats the part where we compile to llvm code.
@@ -12,6 +20,11 @@ export class Generator {
 	 */
 	private context = new llvm.LLVMContext();
 	private module = new llvm.Module("cheelang", this.context);
+
+	/**
+	 * All variables in the current context.
+	 */
+	private variables: Variable[] = [];
 
 	constructor(public tree: AstTree) { }
 
@@ -26,6 +39,20 @@ export class Generator {
 				const node = child as StringLiteralNode;
 
 				return builder.createGlobalStringPtr(node.value.substring(1, node.value.length - 1));
+			}
+			case "IntegerLiteralNode": {
+				const node = child as IntegerLiteralNode;
+
+				return llvm.ConstantInt.get(this.context, node.value);
+			}
+			case "VariableNode": {
+				const node = child as VariableNode;
+				const variable = this.variables.find(v => v.name === node.name);
+
+				if (!variable)
+					throw new Error(`Variable ${node.name} doesn't exist.`);
+
+				return builder.createLoad(variable.value);
 			}
 		}
 
@@ -49,8 +76,22 @@ export class Generator {
 				const args = node.args.map(p => this.generateType(p, builder));
 
 				builder.createCall(callee, args);
-
 			} break;
+			case "SetVariableNode": {
+				const node = child as SetVariableNode;
+				const value = this.generateType(node.value, builder);
+				const pointer = builder.createAlloca(value.type, undefined, node.name);
+
+				const variable = this.variables.find(v => v.name === node.name);
+
+				// Store the value or overwrite it
+				if (!variable)
+					this.variables.push(new Variable(pointer.name, pointer, value.type));
+				else
+					variable.value = pointer;
+
+				builder.createStore(value, pointer);
+			}
 		}
 	}
 
@@ -59,7 +100,7 @@ export class Generator {
 	 */
 	generate(): string {
 		// Default Print Function // TODO: Remove this
-		this.module.getOrInsertFunction("printf", llvm.FunctionType.get(llvm.Type.getInt32Ty(this.context), [llvm.Type.getInt8PtrTy(this.context)], false));
+		this.module.getOrInsertFunction("printf", llvm.FunctionType.get(llvm.Type.getInt32Ty(this.context), [llvm.Type.getInt8PtrTy(this.context)], true));
 		this.module.getOrInsertFunction("main", llvm.FunctionType.get(llvm.Type.getInt32Ty(this.context), [], false));
 
 		// Generate the code

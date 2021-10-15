@@ -1,1 +1,5 @@
-printf("Naruto!")
+test = "Hallo Welt! %s"
+
+test = "Chee! %s"
+
+printf(test, "Oh mein Gott! Der hackt, er hackt!")
