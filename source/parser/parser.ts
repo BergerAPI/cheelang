@@ -3,7 +3,7 @@ import { exit } from "process";
 import fs from "fs";
 import { logger, options } from "..";
 import { Lexer, Token } from "../lexer";
-import { AstNode, AstTree, BooleanLiteralNode, CallNode, ExpressionNode, NumberLiteralNode, SetVariableNode, StringLiteralNode, UnaryNode, VariableNode } from "./ast";
+import { AstNode, AstTree, BooleanLiteralNode, CallNode, ExpressionNode, FloatLiteralNode, IntegerLiteralNode, SetVariableNode, StringLiteralNode, UnaryNode, VariableNode } from "./ast";
 
 /**
  * Syntax checking and preparing the Abstract Syntax Tree (AST) for the
@@ -44,23 +44,34 @@ export class Parser {
 		const tokenValue = this.token.raw;
 		const tokenName = this.token.type;
 
-		if (tokenValue == "+" || tokenValue == "-" || tokenValue == "!") {
-			this.expect(tokenName);
-			return new UnaryNode(this.factor(), tokenValue);
-		} else if (tokenName == "INTEGER_LITERAL" || tokenName == "FLOAT_LITERAL") {
-			this.expect(tokenName);
-			return new NumberLiteralNode(parseFloat(tokenValue));
-		} else if (tokenName == "STRING_LITERAL") {
-			this.expect(tokenName);
-			return new StringLiteralNode(tokenValue);
-		} else if (tokenName == "BOOLEAN_LITERAL") {
-			this.expect(tokenName);
-			return new BooleanLiteralNode(tokenValue == "true");
-		} else if (tokenName == "LEFT_PARENTHESIS") {
-			this.expect("LEFT_PARENTHESIS");
-			const result = this.expression(false);
-			this.expect("RIGHT_PARENTHESIS");
-			return result;
+		switch (tokenName) {
+			case "ARITHMETIC_OPERATOR": {
+				this.expect(tokenName);
+
+				if (tokenValue == "+" || tokenValue == "-" || tokenValue == "!")
+					return new UnaryNode(this.factor(), tokenValue);
+
+				throw new Error("This isn't a factor lmao");
+			}
+			case "LEFT_PARENTHESIS": {
+				this.expect(tokenName);
+				const result = this.expression(false);
+				this.expect("RIGHT_PARENTHESIS");
+				return result;
+			}
+
+			case "INTEGER_LITERAL":
+				this.expect(tokenName);
+				return new IntegerLiteralNode(parseInt(tokenValue));
+			case "FLOAT_LITERAL":
+				this.expect(tokenName);
+				return new FloatLiteralNode(parseFloat(tokenValue));
+			case "STRING_LITERAL":
+				this.expect(tokenName);
+				return new StringLiteralNode(tokenValue);
+			case "BOOLEAN_LITERAL":
+				this.expect(tokenName);
+				return new BooleanLiteralNode(tokenValue === "true");
 		}
 
 		return this.identifier();
@@ -130,6 +141,33 @@ export class Parser {
 	}
 
 	/**
+	 * Checking if both values are the same type.
+	 */
+	private checkExpression(expression: ExpressionNode): boolean {
+		if (expression.left instanceof ExpressionNode)
+			if (!this.checkExpression(expression.left as ExpressionNode))
+				return false;
+
+		if (expression.right instanceof ExpressionNode)
+			if (!this.checkExpression(expression.right as ExpressionNode))
+				return false;
+
+		if (expression.left instanceof IntegerLiteralNode && !(expression.right instanceof IntegerLiteralNode))
+			return false;
+
+		if (expression.left instanceof FloatLiteralNode && !(expression.right instanceof FloatLiteralNode))
+			return false;
+
+		if (expression.left instanceof StringLiteralNode && !(expression.right instanceof StringLiteralNode))
+			return false;
+
+		if (expression.left instanceof BooleanLiteralNode && !(expression.right instanceof BooleanLiteralNode))
+			return false;
+
+		return true;
+	}
+
+	/**
 	 * Parsing an expression.
 	 */
 	private expression(alone: boolean): AstNode {
@@ -159,7 +197,13 @@ export class Parser {
 			return new ExpressionNode(expr, this.expression(false), operator);
 		}
 
-		if (((alone && !this.token) || (alone && this.token.raw != ".")) && (expr instanceof ExpressionNode || expr instanceof NumberLiteralNode || expr instanceof StringLiteralNode || expr instanceof BooleanLiteralNode))
+		// Checking if both values are the same
+		if (expr instanceof ExpressionNode) {
+			if (!this.checkExpression(expr))
+				logger.error(`Both values must be the same type.`);
+		}
+
+		if (((alone && !this.token) || (alone && this.token.raw != ".")) && (expr instanceof ExpressionNode || expr instanceof IntegerLiteralNode || expr instanceof FloatLiteralNode || expr instanceof StringLiteralNode || expr instanceof BooleanLiteralNode))
 			logger.warn("Expression stands alone without a statement. Line: " + (this.token ? this.token.line.toString() : this.lexer.line.toString()));
 
 		return expr;

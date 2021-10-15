@@ -44,12 +44,26 @@ export class StringLiteralNode implements AstNode {
 }
 
 /**
- * A basic number. (e.g. 1 or 1.1)
+ * A basic number. (e.g. 1)
  */
-export class NumberLiteralNode implements AstNode {
-	type = "NumberLiteralNode";
+export class IntegerLiteralNode implements AstNode {
+	type = "IntegerLiteralNode";
 
 	constructor(public value: number) {
+		if (!Number.isInteger(value))
+			throw new Error("IntegerLiteralNode must be an integer: " + value);
+	}
+}
+
+/**
+ * A basic number. (e.g. 1)
+ */
+export class FloatLiteralNode implements AstNode {
+	type = "FloatLiteralNode";
+
+	constructor(public value: number) {
+		if (Number.isInteger(value))
+			throw new Error("FloatLiteralNode can't be an integer: " + value);
 	}
 }
 

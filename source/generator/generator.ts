@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AstTree } from "../parser/ast";
-import { FunctionParameter, LLVMType, VariableAttributes } from "./instructions";
-import { LLVM } from "./llvm";
+import * as llvm from "llvm-node";
 
 /**
  * Thats the part where we compile to llvm code.
@@ -11,35 +10,36 @@ export class Generator {
 	/**
 	 * For using llvm
 	 */
-	private llvm: LLVM = new LLVM();
+	private context = new llvm.LLVMContext();
+	private module = new llvm.Module("cheelang", this.context);
 
 	constructor(public tree: AstTree) { }
-
-	/**
-	 * Generating a constant for the char array (the string)
-	 * @param value the value of the string
-	 */
-	constantString(value: string, name = ""): string {
-		const nName = name == "" ? (".str" + this.llvm.currentFunction?.scope.length) : name;
-
-		this.llvm.global(nName, LLVMType.array(LLVMType.integer(8), value.length), `c"${value}"`, [VariableAttributes.PRIVATE, VariableAttributes.UNNAMED_ADDRESS, VariableAttributes.CONSTANT]);
-
-		return nName;
-	}
 
 	/**
 	 * Here we put all parts into a string.
 	 */
 	generate(): string {
-		this.llvm.declareFunction("printf", LLVMType.integer(32), [new FunctionParameter(LLVMType.integer(8))]);
-		this.llvm.defineFunction("main", LLVMType.void());
+		// Default Print Function // TODO: Remove this
+		this.module.getOrInsertFunction("printf", llvm.FunctionType.get(llvm.Type.getInt32Ty(this.context), [llvm.Type.getInt8PtrTy(this.context)], false));
+		this.module.getOrInsertFunction("main", llvm.FunctionType.get(llvm.Type.getInt32Ty(this.context), [], false));
 
-		this.llvm.return();
+		// Generate the code
+		const main = this.module.getFunction("main");
+		const printf = this.module.getFunction("printf");
 
-		// Generate code
-		//this.tree.children.forEach(child => this.generateExpression(child));
+		if (!printf || !printf)
+			throw new Error("Something went very wrong.");
 
-		return this.llvm.toString();
+		const entry = llvm.BasicBlock.create(this.context, "entry", main);
+		const builder = new llvm.IRBuilder(entry);
+
+		const arrayPtr = builder.createGlobalStringPtr("Hello world", "test", 0);
+
+		builder.createCall(printf, [arrayPtr]);
+
+		builder.createRet(llvm.ConstantInt.get(this.context, 0));
+
+		return this.module.print();
 	}
 
 }
