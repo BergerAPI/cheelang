@@ -42,18 +42,13 @@ export class Generator {
 	 * Generating an llvm type only by the data type name (e.g. string/int)
 	 */
 	generateTypeByName(name: string): llvm.Type {
-		if (name.startsWith("i") && !isNaN(parseInt(name.substring(1)))) {
-			const size = parseInt(name.substring(1));
-
-			return llvm.Type.getIntNTy(this.context, size);
-		}
-
 		switch (name) {
 			case "string": return llvm.Type.getInt8PtrTy(this.context);
 			case "boolean": return llvm.Type.getInt1Ty(this.context);
 			case "void": return llvm.Type.getVoidTy(this.context);
 			case "float": return llvm.Type.getFloatTy(this.context);
 			case "double": return llvm.Type.getDoubleTy(this.context);
+			case "int": return llvm.Type.getInt32Ty(this.context);
 		}
 
 		throw new Error(`Unknown Type. (${name})`);

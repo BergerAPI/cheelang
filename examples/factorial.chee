@@ -1,7 +1,7 @@
-external func printf(string text): i32
+external func printf(string text, ...): int
 
 ; Simple Factorial Function
-func factorial(i32 n): i32 {
+func factorial(int n): int {
 	if n > 1 {
 		return n * factorial(n - 1)
 	}
@@ -9,7 +9,7 @@ func factorial(i32 n): i32 {
 	return 1
 }
 
-func main(): i32 {
+func main(): int {
 	; This was pretty easy, right?
 	printf("%i", factorial(9))
 

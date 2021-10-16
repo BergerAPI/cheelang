@@ -1,9 +1,9 @@
 external func cos(double x): double
 external func sin(double x): double
 
-external func printf(string text, ...): i32
+external func printf(string text, ...): int
 
-func main(): i32 {
+func main(): int {
 
 	printf("%f", cos(200.0))
 	

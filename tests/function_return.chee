@@ -1,6 +1,6 @@
-external func printf(string text, ...): i32
+external func printf(string text, ...): int
 
-func recursive_test(i32 test): i32 {
+func recursive_test(int test): int {
 	if (test < 10) {
 		return recursive_test(test + 1)
 	}
@@ -8,7 +8,7 @@ func recursive_test(i32 test): i32 {
 	return test
 }
 
-func main(): i32 {
+func main(): int {
 	n = recursive_test(0)
 
 	printf("We counted: %i", n)
