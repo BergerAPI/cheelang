@@ -1,4 +1,4 @@
-external func printf(string text): i32
+external func printf(string text, ...): i32
 
 func recursive_test(i32 test): i32 {
 	if (test < 10) {

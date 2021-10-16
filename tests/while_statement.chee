@@ -1,4 +1,4 @@
-external func printf(string text): i32
+external func printf(string text, ...): i32
 
 func main(): i32 {
 	n = 0
