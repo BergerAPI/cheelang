@@ -1,0 +1,13 @@
+external func printf(string text, ...): i32
+
+func main(): i32 {
+	n = true
+
+	if n {
+		printf("n is true!")
+	} else {
+		printf("n is false!")
+	}
+
+	return 0
+}

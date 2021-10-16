@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { AstNode, AstTree, CallNode, ExpressionNode, FloatLiteralNode, FunctionNode, IfNode, IntegerLiteralNode, ReturnNode, SetVariableNode, StringLiteralNode, VariableNode, WhileNode } from "../parser/ast";
+import { AstNode, AstTree, BooleanLiteralNode, CallNode, ExpressionNode, FloatLiteralNode, FunctionNode, IfNode, IntegerLiteralNode, ReturnNode, SetVariableNode, StringLiteralNode, VariableNode, WhileNode } from "../parser/ast";
 import * as llvm from "llvm-node";
 
 /**
@@ -80,6 +80,11 @@ export class Generator {
 				const node = child as FloatLiteralNode;
 
 				return llvm.ConstantFP.get(this.context, node.value);
+			}
+			case "BooleanLiteralNode": {
+				const node = child as BooleanLiteralNode;
+
+				return llvm.ConstantInt.get(this.context, node.value ? 1 : 0, 1);
 			}
 			case "VariableNode": {
 				const node = child as VariableNode;
