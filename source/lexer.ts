@@ -9,6 +9,7 @@ export class TokenType {
 	static INTEGER_LITERAL = /^([0-9]+)/;
 	static BOOLEAN_LITERAL = /^(true|false)/
 	static COMMA = /^(,)/;
+	static COLON = /^(:)/;
 	static COMMENT = /^(;)/;
 	static DOT = /^(\.)/;
 	static ARITHMETIC_OPERATOR = /^([+-/*])/;
@@ -22,7 +23,7 @@ export class TokenType {
 	static RIGHT_BRACKET = /^(\])/;
 	static EQUALS = /^(=)/;
 	static EXCLAMATION_MARK = /^(!)/;
-	static KEYWORD = /^(if|else|while|break|return)/;
+	static KEYWORD = /^(if|else|while|break|return|func|external)/;
 	static IDENTIFIER = /^([a-zA-Z0-9_]+)/;
 }
 

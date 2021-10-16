@@ -3,7 +3,7 @@ import { exit } from "process";
 import fs from "fs";
 import { logger, options } from "..";
 import { Lexer, Token } from "../lexer";
-import { AstNode, AstTree, BooleanLiteralNode, CallNode, ExpressionNode, FloatLiteralNode, IfNode, IntegerLiteralNode, SetVariableNode, StringLiteralNode, UnaryNode, VariableNode, WhileNode } from "./ast";
+import { AstNode, AstTree, BooleanLiteralNode, CallNode, ExpressionNode, FloatLiteralNode, FunctionNode, IfNode, IntegerLiteralNode, ParameterNode, ReturnNode, SetVariableNode, StringLiteralNode, UnaryNode, VariableNode, WhileNode } from "./ast";
 
 /**
  * Syntax checking and preparing the Abstract Syntax Tree (AST) for the
@@ -243,6 +243,66 @@ export class Parser {
 				}
 
 				return new WhileNode(condition, scope);
+			}
+			case "func":
+			case "external": {
+				const isExternal = tokenValue === "external";
+
+				if (isExternal)
+					this.expect("KEYWORD");
+
+				const functionName = this.token.raw;
+				let returnType = "void";
+				const scope = [];
+				const args = [];
+
+				this.expect("IDENTIFIER");
+				this.expect("LEFT_PARENTHESIS");
+
+				while (this.token && this.token.raw != ")") {
+					const type = this.token.raw;
+					this.expect("IDENTIFIER");
+
+					const name = this.token.raw;
+					this.expect("IDENTIFIER");
+
+					args.push(new ParameterNode(name, type));
+
+					if (this.token.raw != ")")
+						this.expect("COMMA");
+				}
+
+				this.expect("RIGHT_PARENTHESIS");
+
+				if (this.token.raw === ":") {
+					this.expect("COLON");
+					returnType = this.token.raw;
+					this.expect("IDENTIFIER");
+				}
+
+				if (!isExternal) {
+					this.expect("LEFT_BRACE");
+
+					while (this.token && this.token.type != "RIGHT_BRACE") {
+						const token = this.token;
+
+						// I have to do it like this because otherwise typescript complains that this
+						// will always return true
+						if (token.type === "RIGHT_BRACE")
+							break;
+
+						scope.push(this.decidePart());
+					}
+
+					this.expect("RIGHT_BRACE");
+				}
+
+				return new FunctionNode(functionName, args, scope, returnType, isExternal);
+			}
+			case "return": {
+				const value = this.expression(false);
+
+				return new ReturnNode(value);
 			}
 		}
 

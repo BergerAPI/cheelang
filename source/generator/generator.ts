@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { AstNode, AstTree, CallNode, ExpressionNode, IfNode, IntegerLiteralNode, SetVariableNode, StringLiteralNode, VariableNode, WhileNode } from "../parser/ast";
+import { AstNode, AstTree, CallNode, ExpressionNode, FunctionNode, IfNode, IntegerLiteralNode, ReturnNode, SetVariableNode, StringLiteralNode, VariableNode, WhileNode } from "../parser/ast";
 import * as llvm from "llvm-node";
 
 /**
@@ -34,16 +34,37 @@ export class Generator {
 	/**
 	 * Current function.
 	 */
-	private currentFunction!: llvm.Function;
+	private currentFunction!: llvm.Function | undefined;
 
 	constructor(public tree: AstTree) { }
+
+	/**
+	 * Generating an llvm type only by the data type name (e.g. string/int)
+	 */
+	generateTypeByName(name: string): llvm.Type {
+		if (name.startsWith("i") && !isNaN(parseInt(name.substring(1)))) {
+			const size = parseInt(name.substring(1));
+
+			return llvm.Type.getIntNTy(this.context, size);
+		}
+
+		switch (name) {
+			case "string": return llvm.Type.getInt8PtrTy(this.context);
+			case "boolean": return llvm.Type.getInt1Ty(this.context);
+			case "void": return llvm.Type.getVoidTy(this.context);
+			case "float": return llvm.Type.getFloatTy(this.context);
+			case "double": return llvm.Type.getDoubleTy(this.context);
+		}
+
+		throw new Error(`Unknown Type. (${name})`);
+	}
 
 	/**
 	 * Generating an llvm type.
 	 * 
 	 * @param child The node from the AST
 	 */
-	generateType(child: AstNode, builder: llvm.IRBuilder): llvm.Value {
+	generateValue(child: AstNode, builder: llvm.IRBuilder): llvm.Value {
 		switch (child.type) {
 			case "StringLiteralNode": {
 				const node = child as StringLiteralNode;
@@ -62,30 +83,39 @@ export class Generator {
 				if (!variable)
 					throw new Error(`Variable ${node.name} doesn't exist.`);
 
-				return builder.createLoad(variable.value);
+				return builder.createLoad(variable.value, node.name);
 			}
 			case "ExpressionNode": {
 				const node = child as ExpressionNode;
+				const left = this.generateValue(node.left, builder);
+				const right = this.generateValue(node.right, builder);
 
-				if (["+", "-", "*", "/", ">", "<", "==", "!=", "<=", ">=", "||", "&&"].includes(node.operator)) {
-					const left = this.generateType(node.left, builder);
-					const right = this.generateType(node.right, builder);
+				switch (node.operator) {
+					case "+": return builder.createAdd(left, right, "addtmp");
+					case "-": return builder.createSub(left, right, "subtmp");
+					case "*": return builder.createMul(left, right, "multmp");
+					case "/": return builder.createSDiv(left, right, "divtmp");
+					case ">": return builder.createICmpSGT(left, right, "gt");
+					case "<": return builder.createICmpSLT(left, right, "lt");
+					case "==": return builder.createICmpEQ(left, right, "eq");
+					case "!=": return builder.createICmpNE(left, right, "ne");
+					case ">=": return builder.createICmpSGE(left, right, "ge");
+					case "<=": return builder.createICmpSLE(left, right, "le");
+					case "&&": return builder.createAnd(left, right, "andtmp");
+					case "||": return builder.createOr(left, right, "ortmp");
+				}
 
-					switch (node.operator) {
-						case "+": return builder.createAdd(left, right, "addtmp");
-						case "-": return builder.createSub(left, right, "subtmp");
-						case "*": return builder.createMul(left, right, "multmp");
-						case "/": return builder.createSDiv(left, right, "divtmp");
-						case ">": return builder.createICmpSGT(left, right, "gt");
-						case "<": return builder.createICmpSLT(left, right, "lt");
-						case "==": return builder.createICmpEQ(left, right, "eq");
-						case "!=": return builder.createICmpNE(left, right, "ne");
-						case "=>": return builder.createICmpSGE(left, right, "ge");
-						case "<=": return builder.createICmpSLE(left, right, "le");
-						case "&&": return builder.createAnd(left, right, "andtmp");
-						case "||": return builder.createOr(left, right, "ortmp");
-					}
-				} else throw new Error(`Operator ${node.operator} doesn't exist.`);
+				throw new Error(`Operator ${node.operator} doesn't exist.`);
+			}
+			case "CallNode": {
+				const node = child as CallNode;
+
+				const callee = this.module.getFunction(node.name);
+
+				if (!callee)
+					throw new Error(`Function ${node.name} doesn't exist.`);
+
+				return this.builder.createCall(callee, node.args.map(a => this.generateValue(a, builder)), "calltmp");
 			}
 		}
 
@@ -101,19 +131,27 @@ export class Generator {
 		switch (child.type) {
 			case "CallNode": {
 				const node = child as CallNode;
+
+				if (!this.currentFunction || !this.builder)
+					throw new Error("Can't call a function outside of an function.");
+
 				const callee = this.module.getFunction(node.name);
 
 				if (!callee)
 					throw new Error(`Function ${node.name} doesn't exist.`);
 
-				const args = node.args.map(p => this.generateType(p, this.builder));
+				const args = node.args.map(p => this.generateValue(p, this.builder));
 
-				this.builder.createCall(callee, args);
+				this.builder.createCall(callee, args, node.name);
 			} break;
 			case "SetVariableNode": {
 				const node = child as SetVariableNode;
-				const value = this.generateType(node.value, this.builder);
 
+				if (!this.currentFunction || !this.builder)
+					throw new Error("Can't set an variable outside of a function.");
+
+
+				const value = this.generateValue(node.value, this.builder);
 				const variable = this.variables.find(v => v.name === node.name);
 
 				// Store the value or overwrite it
@@ -127,7 +165,10 @@ export class Generator {
 			case "IfNode": {
 				const node = child as IfNode;
 
-				const condition = this.generateType(node.condition, this.builder);
+				if (!this.currentFunction || !this.builder)
+					throw new Error("IfNode can only be used inside a function.");
+
+				const condition = this.generateValue(node.condition, this.builder);
 
 				const scopeBlock = llvm.BasicBlock.create(this.context, "if_scope", this.currentFunction);
 				const elseBlock = llvm.BasicBlock.create(this.context, "if_else", this.currentFunction);
@@ -158,6 +199,9 @@ export class Generator {
 			case "WhileNode": {
 				const node = child as WhileNode;
 
+				if (!this.currentFunction || !this.builder)
+					throw new Error("Cannot generate while loop outside of a function.");
+
 				const conditionBlock = llvm.BasicBlock.create(this.context, "while_condition", this.currentFunction);
 				const scopeBlock = llvm.BasicBlock.create(this.context, "while_scope", this.currentFunction);
 				const endBlock = llvm.BasicBlock.create(this.context, "end_scope", this.currentFunction);
@@ -166,7 +210,7 @@ export class Generator {
 
 				// Checking if the condition is true
 				this.builder.setInsertionPoint(conditionBlock);
-				this.builder.createCondBr(this.generateType(node.condition, this.builder), scopeBlock, endBlock);
+				this.builder.createCondBr(this.generateValue(node.condition, this.builder), scopeBlock, endBlock);
 				this.builder.setInsertionPoint(scopeBlock);
 
 				// Saving the scope
@@ -180,6 +224,61 @@ export class Generator {
 				this.builder.createBr(conditionBlock);
 				this.builder.setInsertionPoint(endBlock);
 			} break;
+			case "FunctionNode": {
+				const node = child as FunctionNode;
+
+				if (this.currentFunction)
+					throw new Error("Cannot define a function inside another function.");
+
+				if (node.isExternal) {
+					this.module.getOrInsertFunction(node.name, llvm.FunctionType.get(this.generateTypeByName(node.returnType), node.args.map(p => this.generateTypeByName(p.paramType)), true));
+
+					break;
+				}
+
+				const functionType = llvm.FunctionType.get(this.generateTypeByName(node.returnType), node.args.map(p => this.generateTypeByName(p.paramType)), false);
+				const createdFunction = llvm.Function.create(functionType, llvm.LinkageTypes.ExternalLinkage, node.name, this.module);
+
+				this.currentFunction = createdFunction;
+
+				const entryBlock = llvm.BasicBlock.create(this.context, "entry", this.currentFunction);
+
+				if (!this.builder)
+					this.builder = new llvm.IRBuilder(entryBlock);
+
+				// Adding the arguments to the variable list
+				this.variables = [...node.args.map((p, index) => {
+					const type = this.generateTypeByName(p.paramType);
+					const alloc = this.builder.createAlloca(type, undefined, p.name);
+
+					const param = this.currentFunction?.getArguments()[index];
+
+					if (!param)
+						throw new Error(`Argument ${p.name} doesn't exist.`);
+
+					// Accessing the argument here
+					this.builder.createStore(param, alloc);
+
+					return new Variable(p.name, alloc, type);
+				})];
+
+				this.builder.setInsertionPoint(entryBlock);
+
+				node.scope.forEach(p => this.generateExpression(p));
+
+				// We're outside of an function again
+				this.currentFunction = undefined;
+			} break;
+			case "ReturnNode": {
+				const node = child as ReturnNode;
+
+				if (!this.currentFunction || !this.builder)
+					throw new Error("Can't return because we're not in a function.");
+
+				const value = this.generateValue(node.value, this.builder);
+
+				this.builder.createRet(value);
+			} break;
 		}
 	}
 
@@ -187,25 +286,7 @@ export class Generator {
 	 * Here we put all parts into a string.
 	 */
 	generate(): string {
-		// Default Print Function // TODO: Remove this
-		this.module.getOrInsertFunction("printf", llvm.FunctionType.get(llvm.Type.getInt32Ty(this.context), [llvm.Type.getInt8PtrTy(this.context)], true));
-		this.module.getOrInsertFunction("scanf", llvm.FunctionType.get(llvm.Type.getInt32Ty(this.context), [llvm.Type.getInt8PtrTy(this.context)], true));
-
-		this.module.getOrInsertFunction("main", llvm.FunctionType.get(llvm.Type.getInt32Ty(this.context), [], false));
-
-		// Generate the code
-		const main = this.module.getFunction("main");
-
-		if (!main)
-			throw new Error("Main function doesn't exist.");
-
-		const entry = llvm.BasicBlock.create(this.context, "entry", main);
-		this.builder = new llvm.IRBuilder(entry);
-		this.currentFunction = main;
-
 		this.tree.children.forEach(child => this.generateExpression(child));
-
-		this.builder.createRet(llvm.ConstantInt.get(this.context, 0));
 
 		return this.module.print();
 	}

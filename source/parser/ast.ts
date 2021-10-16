@@ -126,3 +126,33 @@ export class WhileNode implements AstNode {
 	constructor(public condition: AstNode, public scope: AstNode[]) {
 	}
 }
+
+/**
+ * A function parameter.
+ */
+export class ParameterNode implements AstNode {
+	type = "ParameterNode";
+
+	constructor(public name: string, public paramType: string) {
+	}
+}
+
+/**
+ * A function definition.
+ */
+export class FunctionNode implements AstNode {
+	type = "FunctionNode";
+
+	constructor(public name: string, public args: ParameterNode[], public scope: AstNode[], public returnType: string, public isExternal: boolean) {
+	}
+}
+
+/**
+ * Returning from a function
+ */
+export class ReturnNode implements AstNode {
+	type = "ReturnNode";
+
+	constructor(public value: AstNode) {
+	}
+}
