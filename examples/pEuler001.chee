@@ -1,3 +1,5 @@
+; Project Euler: Problem 1, Multiples of 3 or 5
+
 external func printf(string text, ...): int
 
 func main(): int {

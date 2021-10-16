@@ -1,6 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { exit } from "process";
-import { logger } from ".";
 
 // Every token with the correct regex
 export class TokenType {
