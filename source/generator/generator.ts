@@ -100,6 +100,7 @@ export class Generator {
 					case "-": return builder.createSub(left, right, "subtmp");
 					case "*": return builder.createMul(left, right, "multmp");
 					case "/": return builder.createSDiv(left, right, "divtmp");
+					case "%": return builder.createSRem(left, right, "modtmp");
 					case ">": return builder.createICmpSGT(left, right, "gt");
 					case "<": return builder.createICmpSLT(left, right, "lt");
 					case "==": return builder.createICmpEQ(left, right, "eq");

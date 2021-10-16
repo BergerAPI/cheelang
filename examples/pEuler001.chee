@@ -1,0 +1,20 @@
+external func printf(string text, ...): int
+
+func main(): int {
+	var sum = 0
+
+	; Using 'i' and a while loop, because for isn't implemented yet.
+	var i = 0
+
+	while i < 10 {
+		if i % 3 == 0 || i % 5 == 0 {
+			sum = sum + i
+		}
+
+		i = i + 1
+	}
+
+	printf("%i", sum)
+
+	return 0
+}

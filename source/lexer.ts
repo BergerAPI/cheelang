@@ -13,7 +13,7 @@ export class TokenType {
 	static COMMENT = /^(;)/;
 	static DOT = /^(\.)/;
 	static ARITHMETIC_OPERATOR = /^([+-/*])/;
-	static RELATIONAL_OPERATOR = /^(&&|\|\||<=|>=|<|>|==|!=)/;
+	static RELATIONAL_OPERATOR = /^(&&|\|\||<=|>=|<|>|==|!=|%)/;
 	static WHITESPACE = /^(\s+)/;
 	static LEFT_PARENTHESIS = /^(\()/;
 	static RIGHT_PARENTHESIS = /^(\))/;
@@ -107,14 +107,10 @@ export class Lexer {
 					(this.rawContent[this.line].length - this.content[this.line].length) + match[0].length, match[0], key);
 
 			}
-		else {
-			this.line++;
 
-			return this.next(peek);
-		}
+		this.line++;
 
-		logger.error("This shouldn't happen, but it did.");
-		exit(1);
+		return this.next(peek);
 	}
 
 	/**

@@ -153,7 +153,7 @@ export class Parser {
 		let expr = this.term();
 
 		// Lowest pritority
-		while (this.token != undefined && ["+", "-", ">", "<", "<=", ">=", "==", "!="].includes(this.token.raw)) {
+		while (this.token != undefined && ["+", "-", ">", "<", "<=", ">=", "==", "!=", "%"].includes(this.token.raw)) {
 			const operator = this.token.raw;
 
 			this.expect(this.token.type);
