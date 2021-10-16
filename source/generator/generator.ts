@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { AstNode, AstTree, BooleanLiteralNode, CallNode, ExpressionNode, FloatLiteralNode, FunctionNode, IfNode, IntegerLiteralNode, ReturnNode, SetVariableNode, StringLiteralNode, VariableNode, WhileNode } from "../parser/ast";
+import { AstNode, AstTree, BooleanLiteralNode, CallNode, DefineVariableNode, ExpressionNode, FloatLiteralNode, FunctionNode, IfNode, IntegerLiteralNode, ReturnNode, SetVariableNode, StringLiteralNode, VariableNode, WhileNode } from "../parser/ast";
 import * as llvm from "llvm-node";
 
 /**
@@ -155,17 +155,24 @@ export class Generator {
 				if (!this.currentFunction || !this.builder)
 					throw new Error("Can't set an variable outside of a function.");
 
-
 				const value = this.generateValue(node.value, this.builder);
 				const variable = this.variables.find(v => v.name === node.name);
 
-				// Store the value or overwrite it
-				if (!variable) {
-					const pointer = this.builder.createAlloca(value.type, undefined, node.name);
+				if (!variable) throw new Error(`Variable ${node.name} doesn't exist.`);
 
-					this.variables.push(new Variable(pointer.name, pointer, value.type));
-					this.builder.createStore(value, pointer);
-				} else this.builder.createStore(value, variable.value);
+				this.builder.createStore(value, variable.value);
+			} break;
+			case "DefineVariableNode": {
+				const node = child as DefineVariableNode;
+
+				if (!this.currentFunction || !this.builder)
+					throw new Error("Can't set an variable outside of a function.");
+
+				const value = this.generateValue(node.value, this.builder);
+				const pointer = this.builder.createAlloca(value.type, undefined, node.name);
+
+				this.variables.push(new Variable(pointer.name, pointer, value.type));
+				this.builder.createStore(value, pointer);
 			} break;
 			case "IfNode": {
 				const node = child as IfNode;

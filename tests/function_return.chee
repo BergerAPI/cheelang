@@ -9,7 +9,7 @@ func recursive_test(int test): int {
 }
 
 func main(): int {
-	n = recursive_test(0)
+	var n = recursive_test(0)
 
 	printf("We counted: %i", n)
 

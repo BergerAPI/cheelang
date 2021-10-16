@@ -1,7 +1,7 @@
 external func printf(string text, ...): int
 
 func main(): int {
-	n = 0
+	var n = 0
 
 	while n <= 50 || n <= 100 {
 		if n == 100 {

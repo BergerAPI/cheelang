@@ -84,12 +84,22 @@ export class VariableNode implements AstNode {
 }
 
 /**
- * Creating a variable or setting the value of an already existing variable.
+ * Setting the value of an already existing variable.
  */
 export class SetVariableNode implements AstNode {
 	type = "SetVariableNode";
 
 	constructor(public name: string, public value: AstNode) {
+	}
+}
+
+/**
+ * Creating a new variable.
+ */
+export class DefineVariableNode implements AstNode {
+	type = "DefineVariableNode";
+
+	constructor(public name: string, public dataType: string, public value: AstNode) {
 	}
 }
 

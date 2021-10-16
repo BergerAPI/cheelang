@@ -23,7 +23,7 @@ export class TokenType {
 	static RIGHT_BRACKET = /^(\])/;
 	static EQUALS = /^(=)/;
 	static EXCLAMATION_MARK = /^(!)/;
-	static KEYWORD = /^(if|else|while|break|return|func|external)/;
+	static KEYWORD = /^(if|else|while|break|return|func|external|var)/;
 	static IDENTIFIER = /^([a-zA-Z0-9_]+)/;
 }
 

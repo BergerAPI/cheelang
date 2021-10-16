@@ -4,7 +4,6 @@ external func sin(double x): double
 external func printf(string text, ...): int
 
 func main(): int {
-
 	printf("%f", cos(200.0))
 	
 	return 0	

@@ -1,9 +1,8 @@
 external func printf(string text, ...): int
 
 func main(): int {
-	test = "Hallo Welt! %s"
-
-	test = "Chee! %s"
+	var test = "Hallo Welt! %s"
+	var test = "Chee! %s"
 
 	printf(test, "Oh mein Gott! Der hackt, er hackt!")
 

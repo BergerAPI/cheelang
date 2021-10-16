@@ -2,7 +2,7 @@ external func printf(string text, ...): int
 
 func main(): int {
 	if 1 + 2 == 2 {
-		ne_mene = "ne_mene is here! :)"
+		var ne_mene = "ne_mene is here! :)"
 		printf(ne_mene)
 	} else {
 		printf("No ne_mene :(")

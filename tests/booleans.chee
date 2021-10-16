@@ -1,7 +1,7 @@
 external func printf(string text, ...): int
 
 func main(): int {
-	n = true
+	var n = true
 
 	if n {
 		printf("n is true!")

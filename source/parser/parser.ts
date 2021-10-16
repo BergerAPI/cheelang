@@ -3,7 +3,7 @@ import { exit } from "process";
 import fs from "fs";
 import { logger, options } from "..";
 import { Lexer, Token } from "../lexer";
-import { AstNode, AstTree, BooleanLiteralNode, CallNode, ExpressionNode, FloatLiteralNode, FunctionNode, IfNode, IntegerLiteralNode, ParameterNode, ReturnNode, SetVariableNode, StringLiteralNode, UnaryNode, VariableNode, WhileNode } from "./ast";
+import { AstNode, AstTree, BooleanLiteralNode, CallNode, DefineVariableNode, ExpressionNode, FloatLiteralNode, FunctionNode, IfNode, IntegerLiteralNode, ParameterNode, ReturnNode, SetVariableNode, StringLiteralNode, UnaryNode, VariableNode, WhileNode } from "./ast";
 
 /**
  * Syntax checking and preparing the Abstract Syntax Tree (AST) for the
@@ -319,6 +319,25 @@ export class Parser {
 				const value = this.expression(false);
 
 				return new ReturnNode(value);
+			}
+			case "var": {
+				const name = this.token.raw;
+				let type = "";
+
+				this.expect("IDENTIFIER");
+				this.expect("EQUALS");
+
+				if (this.token.type === "COLON") {
+					this.expect("COLON");
+
+					type = this.token.raw;
+
+					this.expect("IDENTIFIER");
+				}
+
+				const value = this.expression(false);
+
+				return new DefineVariableNode(name, type, value);
 			}
 		}
 

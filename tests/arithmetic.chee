@@ -2,7 +2,7 @@ external func printf(string text, ...): int
 
 func main(): int {
 	; N! I'm happy.
-	n = 11
+	var n = 11
 
 	printf("%i", 1 + n * (n + 3))
 
