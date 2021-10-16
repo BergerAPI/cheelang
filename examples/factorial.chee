@@ -11,7 +11,10 @@ func factorial(int n): int {
 
 func main(): int {
 	; This was pretty easy, right?
-	printf("%i", factorial(9))
+  	var result = factorial(9)
+
+  	; Just printing the result.
+	printf("%i", result)
 
 	return 0
 }
