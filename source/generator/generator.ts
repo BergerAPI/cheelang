@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { AstNode, AstTree, CallNode, ExpressionNode, FunctionNode, IfNode, IntegerLiteralNode, ReturnNode, SetVariableNode, StringLiteralNode, VariableNode, WhileNode } from "../parser/ast";
+import { AstNode, AstTree, CallNode, ExpressionNode, FloatLiteralNode, FunctionNode, IfNode, IntegerLiteralNode, ReturnNode, SetVariableNode, StringLiteralNode, VariableNode, WhileNode } from "../parser/ast";
 import * as llvm from "llvm-node";
 
 /**
@@ -75,6 +75,11 @@ export class Generator {
 				const node = child as IntegerLiteralNode;
 
 				return llvm.ConstantInt.get(this.context, node.value);
+			}
+			case "FloatLiteralNode": {
+				const node = child as FloatLiteralNode;
+
+				return llvm.ConstantFP.get(this.context, node.value);
 			}
 			case "VariableNode": {
 				const node = child as VariableNode;
@@ -231,7 +236,7 @@ export class Generator {
 					throw new Error("Cannot define a function inside another function.");
 
 				if (node.isExternal) {
-					this.module.getOrInsertFunction(node.name, llvm.FunctionType.get(this.generateTypeByName(node.returnType), node.args.map(p => this.generateTypeByName(p.paramType)), true));
+					this.module.getOrInsertFunction(node.name, llvm.FunctionType.get(this.generateTypeByName(node.returnType), node.args.map(p => this.generateTypeByName(p.paramType)), node.isVarArg));
 
 					break;
 				}

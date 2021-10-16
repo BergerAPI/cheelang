@@ -50,8 +50,6 @@ export class IntegerLiteralNode implements AstNode {
 	type = "IntegerLiteralNode";
 
 	constructor(public value: number) {
-		if (!Number.isInteger(value))
-			throw new Error("IntegerLiteralNode must be an integer: " + value);
 	}
 }
 
@@ -62,8 +60,6 @@ export class FloatLiteralNode implements AstNode {
 	type = "FloatLiteralNode";
 
 	constructor(public value: number) {
-		if (Number.isInteger(value))
-			throw new Error("FloatLiteralNode can't be an integer: " + value);
 	}
 }
 
@@ -143,7 +139,7 @@ export class ParameterNode implements AstNode {
 export class FunctionNode implements AstNode {
 	type = "FunctionNode";
 
-	constructor(public name: string, public args: ParameterNode[], public scope: AstNode[], public returnType: string, public isExternal: boolean) {
+	constructor(public name: string, public args: ParameterNode[], public scope: AstNode[], public returnType: string, public isVarArg: boolean, public isExternal: boolean) {
 	}
 }
 

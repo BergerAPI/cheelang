@@ -1,0 +1,11 @@
+external func cos(double x): double
+external func sin(double x): double
+
+external func printf(string text, ...): i32
+
+func main(): i32 {
+
+	printf("%f", cos(200.0))
+	
+	return 0	
+}

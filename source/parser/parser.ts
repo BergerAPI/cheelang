@@ -253,6 +253,7 @@ export class Parser {
 
 				const functionName = this.token.raw;
 				let returnType = "void";
+				let isVarArg = false;
 				const scope = [];
 				const args = [];
 
@@ -260,6 +261,21 @@ export class Parser {
 				this.expect("LEFT_PARENTHESIS");
 
 				while (this.token && this.token.raw != ")") {
+
+					if (this.token.raw === ".") {
+						this.expect("DOT");
+						this.expect("DOT");
+						this.expect("DOT");
+
+						if (this.token.type !== "RIGHT_PARENTHESIS") {
+							logger.error("VarArg must be at the end.");
+							exit(1);
+						} else {
+							isVarArg = true;
+							break;
+						}
+					}
+
 					const type = this.token.raw;
 					this.expect("IDENTIFIER");
 
@@ -297,7 +313,7 @@ export class Parser {
 					this.expect("RIGHT_BRACE");
 				}
 
-				return new FunctionNode(functionName, args, scope, returnType, isExternal);
+				return new FunctionNode(functionName, args, scope, returnType, isVarArg, isExternal);
 			}
 			case "return": {
 				const value = this.expression(false);
