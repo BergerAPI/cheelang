@@ -1,17 +1,17 @@
-# Cheese Language
+# Cheelang
 
 A language I made for fun and now I know how parsers work.
 
 # Syntax Example
 
-```rust
-const neededForDrip = 150
+```
+; Using an external clib function
+external func printf(string text, ...): int
 
-fn dripCheck(dripValue, maxDrip) {
-    const percentage = ((dripValue / maxDrip) * 100)
-
-    println("Your drip level is: " + percentage + "%")
+; Simple "Hello World!"
+func main(): int {
+    printf("Hello World!")
+    
+    return 0
 }
-
-dripCheck(125, neededForDrip)
 ```
