@@ -1,9 +1,15 @@
-if 1 + 2 == 2 {
-	ne_mene = "ne_mene is here! :)"
-	printf(ne_mene)
-} else {
-	printf("No ne_mene :(")
-}
+external func printf(string text): i32
 
-; Uncommenting this would result in an error since "ne_mene" isn't in this scope.
-; printf(ne_mene)
+func main(): i32 {
+	if 1 + 2 == 2 {
+		ne_mene = "ne_mene is here! :)"
+		printf(ne_mene)
+	} else {
+		printf("No ne_mene :(")
+	}
+
+	; Uncommenting this would result in an error since "ne_mene" isn't in this scope.
+	; printf(ne_mene)
+
+	return 0
+}

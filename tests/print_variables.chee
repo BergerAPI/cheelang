@@ -1,5 +1,11 @@
-test = "Hallo Welt! %s"
+external func printf(string text): i32
 
-test = "Chee! %s"
+func main(): i32 {
+	test = "Hallo Welt! %s"
 
-printf(test, "Oh mein Gott! Der hackt, er hackt!")
+	test = "Chee! %s"
+
+	printf(test, "Oh mein Gott! Der hackt, er hackt!")
+
+	return 0
+}
