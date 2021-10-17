@@ -325,7 +325,6 @@ export class Parser {
 				let type = "";
 
 				this.expect("IDENTIFIER");
-				this.expect("EQUALS");
 
 				if (this.token.type === "COLON") {
 					this.expect("COLON");
@@ -335,9 +334,16 @@ export class Parser {
 					this.expect("IDENTIFIER");
 				}
 
-				const value = this.expression(false);
+				if (this.token.type === "EQUALS") {
+					this.expect("EQUALS");
 
-				return new DefineVariableNode(name, type, value);
+					const value = this.expression(false);
+
+					return new DefineVariableNode(name, type, value);
+				}
+
+				// No value variable
+				return new DefineVariableNode(name, type, undefined);
 			}
 		}
 

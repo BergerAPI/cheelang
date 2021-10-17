@@ -1,0 +1,11 @@
+external func printf(string text, ...): int
+
+func main(): int {
+	var text: string;
+
+	text = "Naruto."
+
+	printf(text)
+
+	return 0
+}

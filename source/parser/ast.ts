@@ -99,7 +99,7 @@ export class SetVariableNode implements AstNode {
 export class DefineVariableNode implements AstNode {
 	type = "DefineVariableNode";
 
-	constructor(public name: string, public dataType: string, public value: AstNode) {
+	constructor(public name: string, public dataType: string, public value: AstNode | undefined) {
 	}
 }
 
