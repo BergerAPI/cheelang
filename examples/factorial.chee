@@ -1,7 +1,7 @@
-external func printf(string text, ...): int
+external func printf(text: string, ...): int
 
 ; Simple Factorial Function
-func factorial(int n): int {
+func factorial(n: int): int {
 	if n > 1 {
 		return n * factorial(n - 1)
 	}

@@ -1,4 +1,4 @@
-external func printf(string text, ...): int
+external func printf(text: string, ...): int
 
 func main(): int {
 	; N! I'm happy.

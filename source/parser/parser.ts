@@ -276,10 +276,12 @@ export class Parser {
 						}
 					}
 
-					const type = this.token.raw;
+					const name = this.token.raw;
 					this.expect("IDENTIFIER");
 
-					const name = this.token.raw;
+					this.expect("COLON");
+
+					const type = this.token.raw;
 					this.expect("IDENTIFIER");
 
 					args.push(new ParameterNode(name, type));

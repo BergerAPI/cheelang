@@ -1,7 +1,7 @@
-external func cos(double x): double
-external func sin(double x): double
+external func cos(x: double): double
+external func sin(x: double): double
 
-external func printf(string text, ...): int
+external func printf(text: string, ...): int
 
 func main(): int {
 	printf("%f", cos(200.0))

@@ -1,6 +1,6 @@
-external func printf(string text, ...): int
+external func printf(text: string, ...): int
 
-func recursive_test(int test): int {
+func recursive_test(test: int): int {
 	if (test < 10) {
 		return recursive_test(test + 1)
 	}

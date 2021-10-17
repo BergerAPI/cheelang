@@ -33,7 +33,7 @@ syntax region cheeString start=/\v'/ skip=/\v\\./ end=/\v'/
 highlight default link cheeKeywords Identifier
 highlight default link cheeCommentLine Comment
 highlight default link cheeString String
-highlight default link cheeNumber Constant
+highlight default link cheeNumber Float
 highlight default link cheeFunctionCall Function 
 highlight default link cheeVariableDeclaration Variable
 

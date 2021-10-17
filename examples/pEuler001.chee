@@ -1,6 +1,6 @@
 ; Project Euler: Problem 1, Multiples of 3 or 5
 
-external func printf(string text, ...): int
+external func printf(text: string, ...): int
 
 func main(): int {
 	var sum = 0
