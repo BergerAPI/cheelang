@@ -25,7 +25,7 @@ syntax match cheeNumber '[-+]\=\d[[:digit:]]*\.\d*[eE][\-+]\=\d\+' contained dis
 syntax match cheeNumber '\d[[:digit:]]*\.\d*[eE][\-+]\=\d\+' contained display
 
 " Comments
-syntax region cheeCommentLine start=";" end="$"
+syntax region cheeCommentLine start="#" end="$"
 
 syntax region cheeString start=/\v"/ skip=/\v\\./ end=/\v"/
 syntax region cheeString start=/\v'/ skip=/\v\\./ end=/\v'/
