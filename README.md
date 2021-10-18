@@ -36,7 +36,7 @@ This language specializes in combining a high-level syntax and a low-level compi
 # Syntax Example
 
 ```
-; Using an external clib function
+# Using an external clib function
 external func printf(text: string, ...): int
 
 # Simple "Hello World!"
