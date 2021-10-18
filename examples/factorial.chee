@@ -1,6 +1,6 @@
 external func printf(text: string, ...): int
 
-; Simple Factorial Function
+# Simple Factorial Function
 func factorial(n: int): int {
 	if n > 1 {
 		return n * factorial(n - 1)
@@ -10,10 +10,10 @@ func factorial(n: int): int {
 }
 
 func main(): int {
-	; This was pretty easy, right?
+	# This was pretty easy, right?
   	var result = factorial(9)
 
-  	; Just printing the result.
+  	# Just printing the result.
 	printf("%i", result)
 
 	return 0

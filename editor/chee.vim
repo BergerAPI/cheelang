@@ -8,7 +8,7 @@ if exists("b:current_syntax")
 endif
 
 " Language keywords
-syntax keyword cheeKeywords if else true false while func return external
+syntax keyword cheeKeywords if else true false while func return external for
 
 syntax match cheeFunctionCall '\%([^[:cntrl:][:space:][:punct:][:digit:]]\|_\)\%([^[:cntrl:][:punct:][:space:]]\|_\)*\ze\%(\s*(\)'
 

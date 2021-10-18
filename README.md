@@ -39,7 +39,7 @@ This language specializes in combining a high-level syntax and a low-level compi
 ; Using an external clib function
 external func printf(text: string, ...): int
 
-; Simple "Hello World!"
+# Simple "Hello World!"
 func main(): int {
     printf("Hello World!")
 

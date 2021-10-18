@@ -8,7 +8,8 @@ export class TokenType {
 	static BOOLEAN_LITERAL = /^(true|false)/
 	static COMMA = /^(,)/;
 	static COLON = /^(:)/;
-	static COMMENT = /^(;)/;
+	static COMMENT = /^(#)/;
+	static SEMICOLON = /^(;)/;
 	static DOT = /^(\.)/;
 	static ARITHMETIC_OPERATOR = /^([+-/*])/;
 	static RELATIONAL_OPERATOR = /^(&&|\|\||<=|>=|<|>|==|!=|%)/;
@@ -21,7 +22,7 @@ export class TokenType {
 	static RIGHT_BRACKET = /^(\])/;
 	static EQUALS = /^(=)/;
 	static EXCLAMATION_MARK = /^(!)/;
-	static KEYWORD = /^(if|else|while|break|return|func|external|var)/;
+	static KEYWORD = /^(if|else|while|for|break|return|func|external|var)/;
 	static IDENTIFIER = /^([a-zA-Z0-9_]+)/;
 }
 

@@ -1,7 +1,7 @@
 external func printf(text: string, ...): int
 
 func main(): int {
-	; N! I'm happy.
+	# N! I'm happy.
 	var n = 11
 
 	printf("%i", 1 + n * (n + 3))

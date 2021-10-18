@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { AstNode, AstTree, BooleanLiteralNode, CallNode, DefineVariableNode, ExpressionNode, FloatLiteralNode, FunctionNode, IfNode, IntegerLiteralNode, ReturnNode, SetVariableNode, StringLiteralNode, VariableNode, WhileNode } from "../parser/ast";
+import { AstNode, AstTree, BooleanLiteralNode, CallNode, DefineVariableNode, ExpressionNode, FloatLiteralNode, ForNode, FunctionNode, IfNode, IntegerLiteralNode, ReturnNode, SetVariableNode, StringLiteralNode, VariableNode, WhileNode } from "../parser/ast";
 import * as llvm from "llvm-node";
 import { logger } from "..";
 import { exit } from "process";
@@ -244,6 +244,43 @@ export class Generator {
 				const currentScope = [...this.variables];
 
 				node.scope.forEach(p => this.generateExpression(p));
+
+				// Restoring the scope
+				this.variables = currentScope;
+
+				this.builder.createBr(conditionBlock);
+				this.builder.setInsertionPoint(endBlock);
+			} break;
+			case "ForNode": {
+				const node = child as ForNode;
+
+				if (!this.currentFunction || !this.builder)
+					throw new Error("Cannot define a for-loop outside of a function.");
+
+				const conditionBlock = llvm.BasicBlock.create(this.context, "for_condition", this.currentFunction);
+				const scopeBlock = llvm.BasicBlock.create(this.context, "for_scope", this.currentFunction);
+				const endBlock = llvm.BasicBlock.create(this.context, "end_scope", this.currentFunction);
+
+				const value = this.generateValue(node.start, this.builder);
+				const pointer = this.builder.createAlloca(value.type, undefined, node.variable);
+
+				this.variables.push(new Variable(node.variable, pointer, value.type));
+				this.builder.createStore(value, pointer);
+
+				this.builder.createBr(conditionBlock);
+
+				// Checking if the condition is true
+				this.builder.setInsertionPoint(conditionBlock);
+				this.builder.createCondBr(this.generateValue(node.condition, this.builder), scopeBlock, endBlock);
+				this.builder.setInsertionPoint(scopeBlock);
+
+				// Saving the scope
+				const currentScope = [...this.variables];
+
+				node.scope.forEach(p => this.generateExpression(p));
+
+				// Increasing the variable
+				this.generateExpression(node.step);
 
 				// Restoring the scope
 				this.variables = currentScope;

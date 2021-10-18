@@ -3,7 +3,7 @@ import { exit } from "process";
 import fs from "fs";
 import { logger, options } from "..";
 import { Lexer, Token } from "../lexer";
-import { AstNode, AstTree, BooleanLiteralNode, CallNode, DefineVariableNode, ExpressionNode, FloatLiteralNode, FunctionNode, IfNode, IntegerLiteralNode, ParameterNode, ReturnNode, SetVariableNode, StringLiteralNode, UnaryNode, VariableNode, WhileNode } from "./ast";
+import { AstNode, AstTree, BooleanLiteralNode, CallNode, DefineVariableNode, ExpressionNode, FloatLiteralNode, ForNode, FunctionNode, IfNode, IntegerLiteralNode, ParameterNode, ReturnNode, SetVariableNode, StringLiteralNode, UnaryNode, VariableNode, WhileNode } from "./ast";
 
 /**
  * Syntax checking and preparing the Abstract Syntax Tree (AST) for the
@@ -243,6 +243,34 @@ export class Parser {
 				}
 
 				return new WhileNode(condition, scope);
+			}
+			case "for": {
+				const variableName = this.token.raw;
+				const scope = [];
+
+				this.expect("IDENTIFIER");
+				this.expect("EQUALS");
+
+				const start = this.expression(false);
+
+				this.expect("SEMICOLON");
+				const condition = this.expression(false);
+				this.expect("SEMICOLON");
+				const step = this.expression(false);
+
+				this.expect("LEFT_BRACE");
+
+				while (this.token && this.token.type != "RIGHT_BRACE")
+					scope.push(this.decidePart());
+
+				this.expect("RIGHT_BRACE");
+
+				if (scope.length == 0) {
+					logger.warn("For statement without any scope. Line: " + line.toString());
+					return undefined;
+				}
+
+				return new ForNode(variableName, start, condition, step, scope);
 			}
 			case "func":
 			case "external": {

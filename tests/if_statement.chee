@@ -8,8 +8,8 @@ func main(): int {
 		printf("No ne_mene :(")
 	}
 
-	; Uncommenting this would result in an error since "ne_mene" isn't in this scope.
-	; printf(ne_mene)
+	# Uncommenting this would result in an error since "ne_mene" isn't in this scope.
+	# printf(ne_mene)
 
 	return 0
 }

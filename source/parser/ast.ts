@@ -134,6 +134,16 @@ export class WhileNode implements AstNode {
 }
 
 /**
+ * A basic for-loop.
+ */
+export class ForNode implements AstNode {
+	type = "ForNode";
+
+	constructor(public variable: string, public start: AstNode, public condition: AstNode, public step: AstNode, public scope: AstNode[]) {
+	}
+}
+
+/**
  * A function parameter.
  */
 export class ParameterNode implements AstNode {
