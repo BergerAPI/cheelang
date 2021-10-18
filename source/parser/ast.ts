@@ -169,6 +169,6 @@ export class FunctionNode implements AstNode {
 export class ReturnNode implements AstNode {
 	type = "ReturnNode";
 
-	constructor(public value: AstNode) {
+	constructor(public value: AstNode | undefined) {
 	}
 }

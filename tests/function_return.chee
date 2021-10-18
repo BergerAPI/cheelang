@@ -8,10 +8,14 @@ func recursive_test(test: int): int {
 	return test
 }
 
-func main(): int {
+func main() {
 	var n = recursive_test(0)
 
 	printf("We counted: %i", n)
 
-	return 0
+	if n == 10 {
+		return
+	}
+
+	printf("This should never be called.")
 }

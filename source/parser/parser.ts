@@ -346,7 +346,10 @@ export class Parser {
 				return new FunctionNode(functionName, args, scope, returnType, isVarArg, isExternal);
 			}
 			case "return": {
-				const value = this.expression(false);
+				let value = undefined;
+
+				if (this.token.type === "ARITHMETIC_OPERATOR" || this.token.type === "FLOAT_LITERAL" || this.token.type === "STRING_LITERAL" || this.token.type === "INTEGER_LITERAL" || this.token.type === "LEFT_PARENTHESIS" || this.token.type === "IDENTIFIER")
+					value = this.expression(false);
 
 				return new ReturnNode(value);
 			}

@@ -66,7 +66,7 @@ export class Generator {
 			case "StringLiteralNode": {
 				const node = child as StringLiteralNode;
 
-				return builder.createGlobalStringPtr(node.value.substring(1, node.value.length - 1).replaceAll("\\n", "\\0A"));
+				return builder.createGlobalStringPtr(node.value.substring(1, node.value.length - 1), "str.");
 			}
 			case "IntegerLiteralNode": {
 				const node = child as IntegerLiteralNode;
@@ -300,7 +300,8 @@ export class Generator {
 					break;
 				}
 
-				const functionType = llvm.FunctionType.get(this.generateTypeByName(node.returnType), node.args.map(p => this.generateTypeByName(p.paramType)), false);
+				const type = this.generateTypeByName(node.returnType);
+				const functionType = llvm.FunctionType.get(type, node.args.map(p => this.generateTypeByName(p.paramType)), false);
 				const createdFunction = llvm.Function.create(functionType, llvm.LinkageTypes.ExternalLinkage, node.name, this.module);
 
 				this.currentFunction = createdFunction;
@@ -330,6 +331,17 @@ export class Generator {
 
 				node.scope.forEach(p => this.generateExpression(p));
 
+				// If the function doesn't return anything, we need to add a return instruction
+				const lastExpression = node.scope[node.scope.length - 1];
+
+				if (!lastExpression || (type.isVoidTy() && lastExpression.type != "ReturnNode"))
+					this.builder.createRetVoid();
+				else if (lastExpression.type != "ReturnNode") {
+					logger.error(`Function ${node.name} doesn't return anything.`);
+					exit(1);
+				}
+
+
 				// We're outside of an function again
 				this.currentFunction = undefined;
 			} break;
@@ -338,6 +350,17 @@ export class Generator {
 
 				if (!this.currentFunction || !this.builder)
 					throw new Error("Can't return because we're not in a function.");
+
+				if (!node.value) {
+					if (!this.currentFunction.type.elementType.returnType.isVoidTy()) {
+						logger.error(`Function ${this.currentFunction.name} must return a value, since its not a void.`);
+						exit(1);
+					}
+
+					this.builder.createRetVoid();
+
+					break;
+				}
 
 				const value = this.generateValue(node.value, this.builder);
 
