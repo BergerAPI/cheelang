@@ -3,7 +3,7 @@ import { exit } from "process";
 import fs from "fs";
 import { logger, options } from "..";
 import { Lexer, Token } from "../lexer";
-import { AstNode, AstTree, BooleanLiteralNode, CallNode, DefineVariableNode, ExpressionNode, FloatLiteralNode, ForNode, FunctionNode, IfNode, IntegerLiteralNode, ParameterNode, ReturnNode, SetVariableNode, StringLiteralNode, UnaryNode, VariableNode, WhileNode } from "./ast";
+import { AstNode, AstTree, BooleanLiteralNode, CallNode, DataTypeArray, DefineVariableNode, ExpressionNode, FloatLiteralNode, ForNode, FunctionNode, IfNode, IntegerLiteralNode, ParameterNode, ReturnNode, SetVariableNode, StringLiteralNode, UnaryNode, VariableNode, WhileNode } from "./ast";
 
 /**
  * Syntax checking and preparing the Abstract Syntax Tree (AST) for the
@@ -35,6 +35,20 @@ export class Parser {
 		}
 
 		return this.token;
+	}
+
+	/**
+	 * We have probably an array here.
+	 */
+	array(type: string, requireSize = false): DataTypeArray {
+		this.expect("LEFT_BRACKET");
+
+		if (requireSize)
+			this.expect("INTEGER_LITERAL");
+
+		this.expect("RIGHT_BRACKET");
+
+		return new DataTypeArray(type, requireSize);
 	}
 
 	/**
@@ -355,7 +369,7 @@ export class Parser {
 			}
 			case "var": {
 				const name = this.token.raw;
-				let type = "";
+				let type: string | DataTypeArray = "";
 
 				this.expect("IDENTIFIER");
 
@@ -365,6 +379,8 @@ export class Parser {
 					type = this.token.raw;
 
 					this.expect("IDENTIFIER");
+
+					if (this.token.raw === "[") type = this.array(type, true);
 				}
 
 				if (this.token.type === "EQUALS") {

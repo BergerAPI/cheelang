@@ -14,6 +14,15 @@ export interface AstNode {
 }
 
 /**
+ * An array.
+ */
+export class DataTypeArray implements AstNode {
+	type = "array"
+
+	constructor(public dataType: string, public requireSize: boolean, public size: number = 64) { }
+}
+
+/**
  * Some cool expression (e.g. `a + b`)
  */
 export class ExpressionNode implements AstNode {
@@ -99,7 +108,7 @@ export class SetVariableNode implements AstNode {
 export class DefineVariableNode implements AstNode {
 	type = "DefineVariableNode";
 
-	constructor(public name: string, public dataType: string, public value: AstNode | undefined) {
+	constructor(public name: string, public dataType: string | DataTypeArray, public value: AstNode | undefined) {
 	}
 }
 

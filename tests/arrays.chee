@@ -1,0 +1,14 @@
+external func printf(text: string, ...): int
+external func scanf(text: string, ...): int
+
+func main() {
+	var test: char[64]
+
+	printf("Type something stupid like you normally would: ")
+
+	# Scanning the input from the user
+	scanf("%s", test)
+
+	# Outputting the input from the user
+	printf("You entered: %s", test)
+}

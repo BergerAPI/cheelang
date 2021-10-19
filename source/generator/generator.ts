@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { AstNode, AstTree, BooleanLiteralNode, CallNode, DefineVariableNode, ExpressionNode, FloatLiteralNode, ForNode, FunctionNode, IfNode, IntegerLiteralNode, ReturnNode, SetVariableNode, StringLiteralNode, VariableNode, WhileNode } from "../parser/ast";
+import { AstNode, AstTree, BooleanLiteralNode, CallNode, DataTypeArray, DefineVariableNode, ExpressionNode, FloatLiteralNode, ForNode, FunctionNode, IfNode, IntegerLiteralNode, ReturnNode, SetVariableNode, StringLiteralNode, VariableNode, WhileNode } from "../parser/ast";
 import * as llvm from "llvm-node";
 import { logger } from "..";
 import { exit } from "process";
@@ -43,7 +43,13 @@ export class Generator {
 	/**
 	 * Generating an llvm type only by the data type name (e.g. string/int)
 	 */
-	generateTypeByName(name: string): llvm.Type {
+	generateTypeByName(name: string | DataTypeArray): llvm.Type {
+		if (name instanceof DataTypeArray) {
+			const type = llvm.Type.getInt32Ty(this.context);
+
+			return llvm.ArrayType.get(type, name.size);
+		}
+
 		switch (name) {
 			case "string": return llvm.Type.getInt8PtrTy(this.context);
 			case "boolean": return llvm.Type.getInt1Ty(this.context);
@@ -51,6 +57,7 @@ export class Generator {
 			case "float": return llvm.Type.getFloatTy(this.context);
 			case "double": return llvm.Type.getDoubleTy(this.context);
 			case "int": return llvm.Type.getInt32Ty(this.context);
+			case "char": return llvm.Type.getInt8Ty(this.context);
 		}
 
 		throw new Error(`Unknown Type. (${name})`);
@@ -183,9 +190,16 @@ export class Generator {
 					this.variables.push(new Variable(pointer.name, pointer, type));
 				} else {
 					const value = this.generateValue(node.value, this.builder);
-					const pointer = this.builder.createAlloca(value.type, undefined, node.name);
+					let type: llvm.Type;
 
-					this.variables.push(new Variable(pointer.name, pointer, value.type));
+					if (node.dataType !== "")
+						type = this.generateTypeByName(node.dataType);
+					else
+						type = value.type;
+
+					const pointer = this.builder.createAlloca(type, undefined, node.name);
+
+					this.variables.push(new Variable(pointer.name, pointer, type));
 					this.builder.createStore(value, pointer);
 				}
 			} break;
