@@ -3,7 +3,7 @@ import { exit } from "process";
 import fs from "fs";
 import { logger, options } from "..";
 import { Lexer, Token } from "../lexer";
-import { AstNode, AstTree, BooleanLiteralNode, CallNode, DataTypeArray, DataTypeArrayReference, DefineVariableNode, ExpressionNode, FloatLiteralNode, ForNode, FunctionNode, IfNode, IntegerLiteralNode, ParameterNode, ReturnNode, SetVariableNode, StringLiteralNode, UnaryNode, VariableNode, WhileNode } from "./ast";
+import { AstNode, AstTree, BooleanLiteralNode, CallNode, CompoundAssignmentNode, DataTypeArray, DataTypeArrayReference, DefineVariableNode, ExpressionNode, FloatLiteralNode, ForNode, FunctionNode, IfNode, IntegerLiteralNode, ParameterNode, ReturnNode, SetVariableNode, StringLiteralNode, UnaryNode, VariableNode, WhileNode } from "./ast";
 
 /**
  * Syntax checking and preparing the Abstract Syntax Tree (AST) for the
@@ -148,6 +148,15 @@ export class Parser {
 			this.expect("EQUALS");
 
 			return new SetVariableNode(token.raw, this.expression(false));
+		}
+
+		// Probably a variable compound assignment
+		if (this.token.type === "COMPOUND_ASSIGNMENT_OPERATOR") {
+			const operator = this.token.raw.replace("=", "");
+
+			this.expect("COMPOUND_ASSIGNMENT_OPERATOR");
+
+			return new CompoundAssignmentNode(token.raw, this.expression(false), operator);
 		}
 
 		if (this.token.raw === "[") {

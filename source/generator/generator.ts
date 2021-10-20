@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { AstNode, AstTree, BooleanLiteralNode, CallNode, DataTypeArray, DataTypeArrayReference, DefineVariableNode, ExpressionNode, FloatLiteralNode, ForNode, FunctionNode, IfNode, IntegerLiteralNode, ReturnNode, SetVariableNode, StringLiteralNode, VariableNode, WhileNode } from "../parser/ast";
+import { AstNode, AstTree, BooleanLiteralNode, CallNode, CompoundAssignmentNode, DataTypeArray, DataTypeArrayReference, DefineVariableNode, ExpressionNode, FloatLiteralNode, ForNode, FunctionNode, IfNode, IntegerLiteralNode, ReturnNode, SetVariableNode, StringLiteralNode, VariableNode, WhileNode } from "../parser/ast";
 import * as llvm from "llvm-node";
 import { logger } from "..";
 import { exit } from "process";
@@ -218,6 +218,37 @@ export class Generator {
 				if (!variable) throw new Error(`Variable ${node.name} doesn't exist.`);
 
 				this.builder.createStore(value, variable.value);
+			} break;
+			case "CompoundAssignmentNode": {
+				const node = child as CompoundAssignmentNode;
+
+				if (!this.currentFunction || !this.builder)
+					throw new Error("Can't set an variable outside of a function.");
+
+				const variable = this.variables.find(v => v.name === node.name);
+
+				if (!variable) throw new Error(`Variable ${node.name} doesn't exist.`);
+
+				switch (node.operator) {
+					case "+":
+						this.builder.createStore(this.builder.createAdd(this.builder.createLoad(variable.value, node.name), this.generateValue(node.value, this.builder), "addtmp"), variable.value);
+						break;
+
+					case "-":
+						this.builder.createStore(this.builder.createSub(this.builder.createLoad(variable.value, node.name), this.generateValue(node.value, this.builder), "subtmp"), variable.value);
+						break;
+
+					case "*":
+						this.builder.createStore(this.builder.createMul(this.builder.createLoad(variable.value, node.name), this.generateValue(node.value, this.builder), "multmp"), variable.value);
+						break;
+
+					case "/":
+						this.builder.createStore(this.builder.createSDiv(this.builder.createLoad(variable.value, node.name), this.generateValue(node.value, this.builder), "divtmp"), variable.value);
+						break;
+
+					default:
+						throw new Error(`Operator ${node.operator} doesn't exist.`);
+				}
 			} break;
 			case "DefineVariableNode": {
 				const node = child as DefineVariableNode;

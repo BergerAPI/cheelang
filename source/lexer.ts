@@ -11,6 +11,7 @@ export class TokenType {
 	static COMMENT = /^(#)/;
 	static SEMICOLON = /^(;)/;
 	static DOT = /^(\.)/;
+	static COMPOUND_ASSIGNMENT_OPERATOR = /^(\+=|-=|\/=|\*=)/;
 	static ARITHMETIC_OPERATOR = /^([+-/*])/;
 	static RELATIONAL_OPERATOR = /^(&&|\|\||<=|>=|<|>|==|!=|%)/;
 	static WHITESPACE = /^(\s+)/;

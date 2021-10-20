@@ -112,6 +112,16 @@ export class SetVariableNode implements AstNode {
 }
 
 /**
+ * Adding to a variable without having to use the '=' operator.
+ */
+export class CompoundAssignmentNode implements AstNode {
+	type = "CompoundAssignmentNode";
+
+	constructor(public name: string, public value: AstNode, public operator: string) {
+	}
+}
+
+/**
  * Creating a new variable.
  */
 export class DefineVariableNode implements AstNode {
