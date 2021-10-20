@@ -2,7 +2,7 @@ external func printf(text: string, ...): int
 external func scanf(text: string, ...): int
 
 func main() {
-	var test: char[64]
+	var test: char[100]
 
 	printf("Type something stupid like you normally would: ")
 

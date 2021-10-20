@@ -158,7 +158,7 @@ export class ForNode implements AstNode {
 export class ParameterNode implements AstNode {
 	type = "ParameterNode";
 
-	constructor(public name: string, public paramType: string) {
+	constructor(public name: string, public paramType: string | DataTypeArray) {
 	}
 }
 
@@ -168,7 +168,7 @@ export class ParameterNode implements AstNode {
 export class FunctionNode implements AstNode {
 	type = "FunctionNode";
 
-	constructor(public name: string, public args: ParameterNode[], public scope: AstNode[], public returnType: string, public isVarArg: boolean, public isExternal: boolean) {
+	constructor(public name: string, public args: ParameterNode[], public scope: AstNode[], public returnType: string | DataTypeArray, public isVarArg: boolean, public isExternal: boolean) {
 	}
 }
 

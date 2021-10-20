@@ -294,7 +294,7 @@ export class Parser {
 					this.expect("KEYWORD");
 
 				const functionName = this.token.raw;
-				let returnType = "void";
+				let returnType: DataTypeArray | string = "void";
 				let isVarArg = false;
 				const scope = [];
 				const args = [];
@@ -323,8 +323,10 @@ export class Parser {
 
 					this.expect("COLON");
 
-					const type = this.token.raw;
+					let type: string | DataTypeArray = this.token.raw;
 					this.expect("IDENTIFIER");
+
+					if (this.token.type === "LEFT_BRACKET") type = this.array(type, false);
 
 					args.push(new ParameterNode(name, type));
 
@@ -338,6 +340,8 @@ export class Parser {
 					this.expect("COLON");
 					returnType = this.token.raw;
 					this.expect("IDENTIFIER");
+
+					if (this.token.type === "LEFT_BRACKET") returnType = this.array(returnType, false);
 				}
 
 				if (!isExternal) {
