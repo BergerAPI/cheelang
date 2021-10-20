@@ -1,0 +1,8 @@
+external func printf(text: string, ...): int
+
+func print(text: string): int {
+	printf("Naruto")
+	printf(text)
+
+	return 0
+}

@@ -70,8 +70,8 @@ export class Lexer {
 	content: string[];
 	rawContent: string[];
 
-	constructor(content: string[]) {
-		this.content = content.join("\n").split("\n").map(item => item.trim());
+	constructor(content: string) {
+		this.content = content.split("\n").map(item => item.trim());
 		this.rawContent = [...this.content];
 	}
 

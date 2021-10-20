@@ -1,6 +1,10 @@
 external func printf(text: string, ...): int
 
+external func print(text: string): int
+
 func main(argc: int, argv: string[]) {
+	print("Test from std.")
+
 	for i = 0; i < argc; i += 1 {
 		printf("%s ", argv[i])
 	}

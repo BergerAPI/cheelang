@@ -8,6 +8,7 @@ import { exec } from "child_process";
 import os from "os";
 import { AstTree } from "./parser/ast";
 import { Generator } from "./generator/generator";
+import path from "path";
 
 // Basic logger
 export const logger = winston.createLogger({
@@ -80,41 +81,47 @@ args.forEach((it) => {
 
 if (files.length > 0) {
 
-	if (options.debug.value) logger.debug("Getting the input files.");
-
-	const fileContents: string[] = files.map((it) => {
-		try {
-			return fs.readFileSync(it, "utf8").toString();
-		} catch (error) {
-			logger.error(`Could not read file ${it}`);
-			exit();
-		}
-	});
-
 	if (options.debug.value) logger.debug(`Input files: ${files.join(", ")}`);
-	if (options.debug.value) logger.debug("Initialising lexer.");
 
-	const lexer: Lexer = new Lexer(fileContents);
-
-	if (options.debug.value) logger.debug("Lexer initialised.");
-	if (options.debug.value) logger.debug("Starting Parser.");
-
-	const tree: AstTree = (new Parser(lexer)).parse();
-
-	if (options.debug.value) logger.debug("Parser started.");
-	if (options.debug.value) logger.debug("Generator starting.");
-
-	const generator = new Generator(tree);
+	// Deleting the directory, so we can create it again
+	if (fs.existsSync("./build"))
+		fs.rmSync("./build", { recursive: true });
 
 	// Creating the directory where we put all 
 	// the generated object files into
-	fs.mkdirSync("build/obj", { recursive: true });
+	fs.mkdirSync("./build/obj", { recursive: true });
 
-	// The llvm code
-	fs.writeFileSync("build/obj/op.ll", generator.generate());
+	// Generating llvm and an ast for every file.
+	files.forEach(it => {
+		const lexer = new Lexer(fs.readFileSync(it, "utf8").toString());
+		const parser = new Parser(lexer);
+		const ast = parser.parse();
+
+		const name = path.basename(it);
+		const withoutExt = name.substring(0, name.lastIndexOf("."));
+
+		if (options.tree.value) {
+			logger.info(`${it}`);
+			logger.info(`${ast.toString()}`);
+		}
+
+		const generator = new Generator(ast);
+		const llvm = generator.generate();
+
+		if (options.debug.value) logger.debug(`Generated llvm for ${it}`);
+
+		if (!options.silent.value) logger.info(`Generated llvm for ${it}`);
+
+		fs.writeFileSync(`build/obj/${withoutExt}.ll`, llvm);
+	});
 
 	// Compiling the llvm code
-	exec(`${os.platform() === "linux" ? "clang" : "clang++"} -o build/a.out build/obj/op.ll`, (error, stdout, stderr) => {
+	exec(`${os.platform() === "linux" ? "clang" : "clang++"} -o build/a.out ${files.map(p => {
+		const name = path.basename(p);
+		const withoutExt = name.substring(0, name.lastIndexOf("."));
+
+		return `build/obj/${withoutExt}.ll`;
+	}).join(" ")}`, (error, stdout, stderr) => {
 		if (error) {
 			logger.error(`Could not compile the code: ${error}`);
 			exit();
