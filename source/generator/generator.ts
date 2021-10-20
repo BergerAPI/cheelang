@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { AstNode, AstTree, BooleanLiteralNode, CallNode, DataTypeArray, DefineVariableNode, ExpressionNode, FloatLiteralNode, ForNode, FunctionNode, IfNode, IntegerLiteralNode, ReturnNode, SetVariableNode, StringLiteralNode, VariableNode, WhileNode } from "../parser/ast";
+import { AstNode, AstTree, BooleanLiteralNode, CallNode, DataTypeArray, DataTypeArrayReference, DefineVariableNode, ExpressionNode, FloatLiteralNode, ForNode, FunctionNode, IfNode, IntegerLiteralNode, ReturnNode, SetVariableNode, StringLiteralNode, VariableNode, WhileNode } from "../parser/ast";
 import * as llvm from "llvm-node";
 import { logger } from "..";
 import { exit } from "process";
+import { isNumber } from "util";
 
 /**
  * A simple variable.
@@ -43,8 +44,13 @@ export class Generator {
 	/**
 	 * Generating an llvm type only by the data type name (e.g. string/int)
 	 */
-	generateTypeByName(name: string | DataTypeArray): llvm.Type {
+	generateTypeByName(name: string | DataTypeArray, isFunction = false): llvm.Type {
 		if (name instanceof DataTypeArray) {
+
+			// We just need a pointer type of the value
+			if (isFunction)
+				return llvm.PointerType.get(this.generateTypeByName(name.dataType, false), 0);
+
 			const type = llvm.Type.getInt32Ty(this.context);
 
 			return llvm.ArrayType.get(type, name.size);
@@ -99,6 +105,47 @@ export class Generator {
 
 				return builder.createLoad(variable.value, node.name);
 			}
+			case "DataTypeArrayReference": {
+				const node = child as DataTypeArrayReference;
+				const variable = this.variables.find(v => v.name === node.variable);
+
+				if (!variable)
+					throw new Error(`Variable ${node.variable} doesn't exist.`);
+
+				if (isNumber(node.index)) {
+
+					// Loading.
+					const loaded = this.builder.createLoad(variable.value, node.variable);
+
+					// Element Pointer, with the index.
+					const value = this.builder.createInBoundsGEP(loaded, [llvm.ConstantInt.get(this.context, node.index)]);
+
+					// Loading the value.
+					return this.builder.createLoad(value, node.variable);
+				}
+
+				// We have probably a variable here.
+				if (!(node.index instanceof VariableNode))
+					throw new Error(`Invalid index.`);
+
+				const casted = node.index as VariableNode;
+				const index = this.variables.find(v => v.name === casted.name);
+
+				if (!index)
+					throw new Error(`Variable ${casted.name} doesn't exist.`);
+
+				// Loading.
+				const loaded = this.builder.createLoad(variable.value, node.variable);
+
+				// zext the loaded value with this api.
+				const zext = this.builder.createZExt(this.builder.createLoad(index.value, casted.name), llvm.Type.getInt32Ty(this.context));
+
+				// Element Pointer, with the index variable.
+				const value = this.builder.createInBoundsGEP(loaded, [zext]);
+
+				// Loading the value.
+				return this.builder.createLoad(value, node.variable);
+			} break;
 			case "ExpressionNode": {
 				const node = child as ExpressionNode;
 				const left = this.generateValue(node.left, builder);
@@ -315,7 +362,7 @@ export class Generator {
 				}
 
 				const type = this.generateTypeByName(node.returnType);
-				const functionType = llvm.FunctionType.get(type, node.args.map(p => this.generateTypeByName(p.paramType)), false);
+				const functionType = llvm.FunctionType.get(type, node.args.map(p => this.generateTypeByName(p.paramType, true)), false);
 				const createdFunction = llvm.Function.create(functionType, llvm.LinkageTypes.ExternalLinkage, node.name, this.module);
 
 				this.currentFunction = createdFunction;
@@ -327,7 +374,7 @@ export class Generator {
 
 				// Adding the arguments to the variable list
 				this.variables = [...node.args.map((p, index) => {
-					const type = this.generateTypeByName(p.paramType);
+					const type = this.generateTypeByName(p.paramType, true);
 					const alloc = this.builder.createAlloca(type, undefined, p.name);
 
 					const param = this.currentFunction?.getArguments()[index];

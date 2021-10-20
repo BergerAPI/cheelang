@@ -17,9 +17,18 @@ export interface AstNode {
  * An array.
  */
 export class DataTypeArray implements AstNode {
-	type = "array"
+	type = "DataTypeArray"
 
 	constructor(public dataType: string, public requireSize: boolean, public size: number = 64) { }
+}
+
+/**
+ * An array reference thingy.
+ */
+export class DataTypeArrayReference implements AstNode {
+	type = "DataTypeArrayReference"
+
+	constructor(public variable: string, public index: number | VariableNode) { }
 }
 
 /**

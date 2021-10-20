@@ -3,7 +3,7 @@ import { exit } from "process";
 import fs from "fs";
 import { logger, options } from "..";
 import { Lexer, Token } from "../lexer";
-import { AstNode, AstTree, BooleanLiteralNode, CallNode, DataTypeArray, DefineVariableNode, ExpressionNode, FloatLiteralNode, ForNode, FunctionNode, IfNode, IntegerLiteralNode, ParameterNode, ReturnNode, SetVariableNode, StringLiteralNode, UnaryNode, VariableNode, WhileNode } from "./ast";
+import { AstNode, AstTree, BooleanLiteralNode, CallNode, DataTypeArray, DataTypeArrayReference, DefineVariableNode, ExpressionNode, FloatLiteralNode, ForNode, FunctionNode, IfNode, IntegerLiteralNode, ParameterNode, ReturnNode, SetVariableNode, StringLiteralNode, UnaryNode, VariableNode, WhileNode } from "./ast";
 
 /**
  * Syntax checking and preparing the Abstract Syntax Tree (AST) for the
@@ -148,6 +148,34 @@ export class Parser {
 			this.expect("EQUALS");
 
 			return new SetVariableNode(token.raw, this.expression(false));
+		}
+
+		if (this.token.raw === "[") {
+			this.expect("LEFT_BRACKET");
+
+			// Checking if the size is an int
+			if (this.token.type !== "INTEGER_LITERAL" && this.token.type !== "IDENTIFIER")
+				throw new Error("Array size must be an integer");
+
+			if (this.token.type === "IDENTIFIER") {
+				const variable = this.identifier();
+
+				if (variable instanceof VariableNode) {
+					this.expect("RIGHT_BRACKET");
+
+					return new DataTypeArrayReference(token.raw, variable);
+				}
+
+				throw new Error("Array size must be an integer");
+			}
+
+			const size = parseInt(this.token.raw);
+
+			this.expect("INTEGER_LITERAL");
+
+			this.expect("RIGHT_BRACKET");
+
+			return new DataTypeArrayReference(token.raw, size);
 		}
 
 		// If its not a function, it must be a variable reference.
