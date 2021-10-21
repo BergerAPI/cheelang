@@ -3,7 +3,7 @@
  * A basic Ast.
  */
 export class AstTree {
-	constructor(public type: string, public children: AstNode[]) { }
+	constructor(public file: string, public children: AstNode[]) { }
 }
 
 /**
@@ -198,5 +198,15 @@ export class ReturnNode implements AstNode {
 	type = "ReturnNode";
 
 	constructor(public value: AstNode | undefined) {
+	}
+}
+
+/**
+ * A basic import.
+ */
+export class ImportNode implements AstNode {
+	type = "ImportNode";
+
+	constructor(public name: string) {
 	}
 }

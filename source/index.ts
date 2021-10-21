@@ -6,9 +6,9 @@ import { Lexer } from "./lexer";
 import { Parser } from "./parser/parser";
 import { exec } from "child_process";
 import os from "os";
-import { AstTree } from "./parser/ast";
 import { Generator } from "./generator/generator";
 import path from "path";
+import { AstTree } from "./parser/ast";
 
 // Basic logger
 export const logger = winston.createLogger({
@@ -45,6 +45,9 @@ export const options = {
 
 // All files that will be compiled soon.
 export const files: string[] = [];
+
+// All Ast's so we can import other files.
+export const asts: AstTree[] = [];
 
 // Our cli arguments but without the default nodejs shit
 const args = process.argv.slice(2);
@@ -91,19 +94,23 @@ if (files.length > 0) {
 	// the generated object files into
 	fs.mkdirSync("./build/obj", { recursive: true });
 
+	// Preproccessing the ast for all files
+	files.forEach((file) => {
+		const lexer = new Lexer(fs.readFileSync(file, "utf8"));
+		const parser = new Parser(lexer);
+
+		asts.push(parser.parse(path.basename(file)));
+	});
+
 	// Generating llvm and an ast for every file.
 	files.forEach(it => {
-		const lexer = new Lexer(fs.readFileSync(it, "utf8").toString());
-		const parser = new Parser(lexer);
-		const ast = parser.parse();
+		const ast = asts.find(ast => ast.file === path.basename(it));
+
+		if (!ast)
+			throw new Error(`Could not find ast for ${it}`);
 
 		const name = path.basename(it);
 		const withoutExt = name.substring(0, name.lastIndexOf("."));
-
-		if (options.tree.value) {
-			logger.info(`${it}`);
-			logger.info(`${ast.toString()}`);
-		}
 
 		const generator = new Generator(ast);
 		const llvm = generator.generate();
@@ -121,7 +128,7 @@ if (files.length > 0) {
 		const withoutExt = name.substring(0, name.lastIndexOf("."));
 
 		return `build/obj/${withoutExt}.ll`;
-	}).join(" ")}`, (error, stdout, stderr) => {
+	}).join(" ")}`, (error, _, stderr) => {
 		if (error) {
 			logger.error(`Could not compile the code: ${error}`);
 			exit();

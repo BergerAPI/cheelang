@@ -3,7 +3,7 @@ import { exit } from "process";
 import fs from "fs";
 import { logger, options } from "..";
 import { Lexer, Token } from "../lexer";
-import { AstNode, AstTree, BooleanLiteralNode, CallNode, CompoundAssignmentNode, DataTypeArray, DataTypeArrayReference, DefineVariableNode, ExpressionNode, FloatLiteralNode, ForNode, FunctionNode, IfNode, IntegerLiteralNode, ParameterNode, ReturnNode, SetVariableNode, StringLiteralNode, UnaryNode, VariableNode, WhileNode } from "./ast";
+import { AstNode, AstTree, BooleanLiteralNode, CallNode, CompoundAssignmentNode, DataTypeArray, DataTypeArrayReference, DefineVariableNode, ExpressionNode, FloatLiteralNode, ForNode, FunctionNode, IfNode, ImportNode, IntegerLiteralNode, ParameterNode, ReturnNode, SetVariableNode, StringLiteralNode, UnaryNode, VariableNode, WhileNode } from "./ast";
 
 /**
  * Syntax checking and preparing the Abstract Syntax Tree (AST) for the
@@ -435,6 +435,13 @@ export class Parser {
 				// No value variable
 				return new DefineVariableNode(name, type, undefined);
 			}
+			case "import": {
+				const name = this.token.raw.substring(1, this.token.raw.length - 1);
+
+				this.expect("STRING_LITERAL");
+
+				return new ImportNode(name);
+			}
 		}
 
 		throw new Error("Unknown keyword: " + tokenValue);
@@ -470,7 +477,7 @@ export class Parser {
 	/**
 	 * Creating the tree.
 	 */
-	parse(): AstTree {
+	parse(file: string): AstTree {
 		const block: AstNode[] = [];
 
 		while (this.token) {
@@ -480,7 +487,7 @@ export class Parser {
 				block.push(node);
 		}
 
-		const result = new AstTree("Program", block);
+		const result = new AstTree(file, block);
 
 		if (options.tree.value) {
 			fs.writeFileSync("./build/tree.json", JSON.stringify(result, null, 4));

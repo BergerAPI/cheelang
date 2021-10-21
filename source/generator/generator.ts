@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { AstNode, AstTree, BooleanLiteralNode, CallNode, CompoundAssignmentNode, DataTypeArray, DataTypeArrayReference, DefineVariableNode, ExpressionNode, FloatLiteralNode, ForNode, FunctionNode, IfNode, IntegerLiteralNode, ReturnNode, SetVariableNode, StringLiteralNode, VariableNode, WhileNode } from "../parser/ast";
+import { AstNode, AstTree, BooleanLiteralNode, CallNode, CompoundAssignmentNode, DataTypeArray, DataTypeArrayReference, DefineVariableNode, ExpressionNode, FloatLiteralNode, ForNode, FunctionNode, IfNode, ImportNode, IntegerLiteralNode, ReturnNode, SetVariableNode, StringLiteralNode, VariableNode, WhileNode } from "../parser/ast";
 import * as llvm from "llvm-node";
-import { logger } from "..";
+import { asts, logger } from "..";
 import { exit } from "process";
 import { isNumber } from "util";
 
@@ -433,7 +433,6 @@ export class Generator {
 					exit(1);
 				}
 
-
 				// We're outside of an function again
 				this.currentFunction = undefined;
 			} break;
@@ -457,6 +456,21 @@ export class Generator {
 				const value = this.generateValue(node.value, this.builder);
 
 				this.builder.createRet(value);
+			} break;
+			case "ImportNode": {
+				const node = child as ImportNode;
+
+				// Getting the ast of the file from index.ts and then defining every function in here.
+				const ast = asts.find(p => p.file == node.name);
+
+				if (!ast)
+					throw new Error(`Could not find the ${node.name}.`);
+
+				ast.children.filter(p => p.type === "FunctionNode").forEach(p => {
+					const fNode = p as FunctionNode;
+
+					this.module.getOrInsertFunction(fNode.name, llvm.FunctionType.get(this.generateTypeByName(fNode.returnType), fNode.args.map(n => this.generateTypeByName(n.paramType)), true));
+				});
 			} break;
 		}
 	}
