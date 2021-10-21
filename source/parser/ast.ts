@@ -187,7 +187,7 @@ export class ParameterNode implements AstNode {
 export class FunctionNode implements AstNode {
 	type = "FunctionNode";
 
-	constructor(public name: string, public args: ParameterNode[], public scope: AstNode[], public returnType: string | DataTypeArray, public isVarArg: boolean, public isExternal: boolean) {
+	constructor(public name: string, public args: ParameterNode[], public scope: AstNode[], public returnType: string | DataTypeArray, public isVarArg: boolean, public isExternal: boolean, public isPrivate: boolean) {
 	}
 }
 

@@ -323,9 +323,14 @@ export class Parser {
 
 				return new ForNode(variableName, start, condition, step, scope);
 			}
+			case "private":
 			case "func":
 			case "external": {
-				const isExternal = tokenValue === "external";
+				const isPrivate = tokenValue === "private";
+				const isExternal = this.token.raw === "external";
+
+				if (isPrivate)
+					this.expect("KEYWORD");
 
 				if (isExternal)
 					this.expect("KEYWORD");
@@ -398,7 +403,7 @@ export class Parser {
 					this.expect("RIGHT_BRACE");
 				}
 
-				return new FunctionNode(functionName, args, scope, returnType, isVarArg, isExternal);
+				return new FunctionNode(functionName, args, scope, returnType, isVarArg, isExternal, isPrivate);
 			}
 			case "return": {
 				let value = undefined;
@@ -489,9 +494,8 @@ export class Parser {
 
 		const result = new AstTree(file, block);
 
-		if (options.tree.value) {
+		if (options.tree.value)
 			fs.writeFileSync("./build/tree.json", JSON.stringify(result, null, 4));
-		}
 
 		return result;
 	}

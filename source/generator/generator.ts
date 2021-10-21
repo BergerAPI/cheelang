@@ -22,7 +22,7 @@ export class Generator {
 	 * For using llvm
 	 */
 	private context = new llvm.LLVMContext();
-	private module = new llvm.Module("cheelang", this.context);
+	private module = new llvm.Module(this.tree.file, this.context);
 
 	/**
 	 * Current thingy.
@@ -469,7 +469,8 @@ export class Generator {
 				ast.children.filter(p => p.type === "FunctionNode").forEach(p => {
 					const fNode = p as FunctionNode;
 
-					this.module.getOrInsertFunction(fNode.name, llvm.FunctionType.get(this.generateTypeByName(fNode.returnType), fNode.args.map(n => this.generateTypeByName(n.paramType)), true));
+					if (!fNode.isPrivate)
+						this.module.getOrInsertFunction(fNode.name, llvm.FunctionType.get(this.generateTypeByName(fNode.returnType), fNode.args.map(n => this.generateTypeByName(n.paramType)), true));
 				});
 			} break;
 		}
