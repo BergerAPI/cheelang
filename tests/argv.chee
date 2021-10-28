@@ -1,4 +1,4 @@
-import "std.chee"
+private external func printf(text: string, ...): int
 
 func main(argc: int, argv: string[]) {
 	for i = 0; i < argc; i += 1 {

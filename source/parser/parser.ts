@@ -30,7 +30,7 @@ export class Parser {
 		if (this.token.type == tokenType)
 			this.token = this.lexer.next();
 		else {
-			logger.error(`Expceted ${tokenType} but we got ${this.token.type} at line ${this.token.line}.`);
+			logger.error(`Expceted ${tokenType} but we got ${this.token.type} (${this.token.raw}) at line ${this.token.line}.`);
 			exit(1);
 		}
 
@@ -329,10 +329,10 @@ export class Parser {
 				const isPrivate = tokenValue === "private";
 				const isExternal = this.token.raw === "external";
 
-				if (isPrivate)
+				if (isExternal)
 					this.expect("KEYWORD");
 
-				if (isExternal)
+				if (this.token.type !== "IDENTIFIER")
 					this.expect("KEYWORD");
 
 				const functionName = this.token.raw;
