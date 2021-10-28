@@ -79,7 +79,7 @@ export class Generator {
 			case "StringLiteralNode": {
 				const node = child as StringLiteralNode;
 
-				return builder.createGlobalStringPtr(node.value.substring(1, node.value.length - 1), "str.");
+				return builder.createGlobalStringPtr(node.value.substring(1, node.value.length - 1).replaceAll("\\n", "\n"), "str.");
 			}
 			case "IntegerLiteralNode": {
 				const node = child as IntegerLiteralNode;

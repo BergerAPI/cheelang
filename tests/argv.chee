@@ -2,6 +2,6 @@ private external func printf(text: string, ...): int
 
 func main(argc: int, argv: string[]) {
 	for i = 0; i < argc; i += 1 {
-		printf("%s ", argv[i])
+		printf("%s \n", argv[i])
 	}
 }
